@@ -202,7 +202,7 @@
     /* MEDIA UPLOAD */
     .media-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
       margin-bottom: 28px;
     }
@@ -330,12 +330,23 @@
       margin-bottom: 12px;
     }
 
-    .entry-media img,
+    .entry-media img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--faint);
+      margin-bottom: 8px;
+    }
     .entry-media video {
-      width: 120px;
-      height: 120px;
+      width: 240px;
+      height: 160px;
       object-fit: cover;
       border: 1px solid var(--faint);
+    }
+    .entry-media audio {
+      width: 100%;
+      margin-top: 4px;
     }
 
     /* POEM BLOCK */
@@ -448,7 +459,7 @@
 
     <div class="log-section">
       <div class="section-label">Observations / Sounds / Notes</div>
-      <textarea id="entry-text" placeholder="what did you hear today? shouts, murmurs, monologues..."></textarea>
+      <textarea id="entry-text" placeholder="what did you hear today? fragments, phrases, overheard whispers..."></textarea>
     </div>
 
     <div class="log-section">
@@ -463,6 +474,11 @@
           <input type="file" id="vid-upload" accept="video/*" multiple onchange="handleMedia(event,'videos')" />
           <span class="upload-icon">▷</span>
           <div class="upload-text">Videos</div>
+        </div>
+        <div class="upload-zone">
+          <input type="file" id="aud-upload" accept="audio/*" multiple onchange="handleMedia(event,'audio')" />
+          <span class="upload-icon">♫</span>
+          <div class="upload-text">Audio</div>
         </div>
       </div>
       <div class="media-preview" id="media-preview"></div>
@@ -499,25 +515,57 @@
 </div>
 
 <script>
-  // ---- Storage ----
-  const STORAGE_KEY = 'metatool_entries_v2';
+  // ---- Supabase Config ----
+  const SUPABASE_URL = 'https://agpjrtaohzgopydbdjfz.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncGpydGFvaHpnb3B5ZGJkamZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5ODkwOTgsImV4cCI6MjA4NzU2NTA5OH0.70tmttIMj8eaa0JiFzgS_gqkqe12Wo0gkedySGWsjxE';
 
-  function loadEntries() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch(e) { return []; }
+  async function sbFetch(path, options = {}) {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+      ...options,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        ...options.headers
+      }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
   }
 
-  function saveEntries(entries) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  async function loadEntries() {
+    try {
+      const data = await sbFetch('entries?order=date.desc');
+      return data;
+    } catch(e) {
+      console.error('Load error:', e);
+      return [];
+    }
+  }
+
+  async function upsertEntry(entry) {
+    // upsert by date (unique key)
+    return await sbFetch('entries?on_conflict=date', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({
+        date: entry.date,
+        text: entry.text,
+        media: entry.media,
+        saved_at: new Date().toISOString()
+      })
+    });
   }
 
   // ---- State ----
-  let entries = loadEntries();
-  let stagingMedia = []; // {type, dataUrl, name}
+  let entries = [];
+  let stagingMedia = [];
 
   // ---- Init ----
   document.getElementById('entry-date').value = today();
+  loadEntries().then(data => { entries = data; });
 
   function today() {
     return new Date().toISOString().split('T')[0];
@@ -539,7 +587,8 @@
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = ev => {
-        stagingMedia.push({ type: type === 'images' ? 'image' : 'video', dataUrl: ev.target.result, name: file.name });
+        const mediaType = type === 'images' ? 'image' : type === 'videos' ? 'video' : 'audio';
+        stagingMedia.push({ type: mediaType, dataUrl: ev.target.result, name: file.name });
         renderPreview();
       };
       reader.readAsDataURL(file);
@@ -550,12 +599,13 @@
     const preview = document.getElementById('media-preview');
     preview.innerHTML = stagingMedia.map((m, i) => {
       if (m.type === 'image') return `<img src="${m.dataUrl}" title="${m.name}" />`;
-      return `<video src="${m.dataUrl}" controls style="width:80px;height:80px;object-fit:cover;"></video>`;
+      if (m.type === 'video') return `<video src="${m.dataUrl}" controls style="width:80px;height:80px;object-fit:cover;"></video>`;
+      return `<div style="font-size:10px;color:var(--muted);padding:4px 0;">♫ ${m.name}</div>`;
     }).join('');
   }
 
   // ---- Save Entry ----
-  function saveEntry() {
+  async function saveEntry() {
     const date = document.getElementById('entry-date').value;
     const text = document.getElementById('entry-text').value.trim();
     const status = document.getElementById('save-status');
@@ -563,30 +613,23 @@
     if (!date) { showStatus(status, 'Please select a date.', 'error'); return; }
     if (!text && stagingMedia.length === 0) { showStatus(status, 'Add some text or media first.', 'error'); return; }
 
-    // Merge with existing entry for same date or create new
-    const existing = entries.findIndex(e => e.date === date);
-    const entry = {
-      date,
-      text,
-      media: stagingMedia.slice(),
-      savedAt: new Date().toISOString()
-    };
+    showStatus(status, 'Saving...', '');
 
-    if (existing >= 0) {
-      // Append text, merge media
-      entries[existing].text = entries[existing].text
-        ? entries[existing].text + '\n\n' + text
-        : text;
-      entries[existing].media = [...(entries[existing].media || []), ...stagingMedia];
-      entries[existing].savedAt = entry.savedAt;
-    } else {
-      entries.unshift(entry);
+    const existing = entries.find(e => e.date === date);
+    const mergedText = existing && existing.text
+      ? existing.text + '\n\n' + text
+      : text;
+    const mergedMedia = [...(existing ? (existing.media || []) : []), ...stagingMedia];
+
+    try {
+      await upsertEntry({ date, text: mergedText, media: mergedMedia });
+      entries = await loadEntries();
+      showStatus(status, 'Entry saved.', 'success');
+      clearForm(true);
+    } catch(e) {
+      console.error(e);
+      showStatus(status, 'Error saving. Check console.', 'error');
     }
-
-    entries.sort((a, b) => b.date.localeCompare(a.date));
-    saveEntries(entries);
-    showStatus(status, 'Entry saved.', 'success');
-    clearForm(true);
   }
 
   function clearForm(keepDate = false) {
@@ -596,6 +639,7 @@
     document.getElementById('media-preview').innerHTML = '';
     document.getElementById('img-upload').value = '';
     document.getElementById('vid-upload').value = '';
+    document.getElementById('aud-upload').value = '';
   }
 
   // ---- Archive ----
@@ -612,10 +656,12 @@
         ${e.text ? `<div class="entry-text">${escHtml(e.text)}</div>` : ''}
         ${(e.media && e.media.length > 0) ? `
           <div class="entry-media">
-            ${e.media.map(m => m.type === 'image'
-              ? `<img src="${m.dataUrl}" title="${m.name}" />`
-              : `<video src="${m.dataUrl}" controls style="width:120px;height:120px;object-fit:cover;"></video>`
-            ).join('')}
+            ${e.media.map(m => {
+              if (m.type === 'image') return `<img src="${m.dataUrl}" title="${m.name}" />`;
+              if (m.type === 'video') return `<video src="${m.dataUrl}" controls></video>`;
+              if (m.type === 'audio') return `<div style="margin-bottom:8px;"><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">${m.name}</div><audio src="${m.dataUrl}" controls></audio></div>`;
+              return '';
+            }).join('')}
           </div>
         ` : ''}
       </div>
