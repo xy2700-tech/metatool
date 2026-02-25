@@ -171,6 +171,8 @@
     }
 
     .tab-btn {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       background: var(--win-bg);
       border: 2px solid;
       border-color: var(--shadow1) var(--shadow2) var(--win-bg) var(--shadow1);
@@ -324,6 +326,8 @@
 
     /* ── BUTTONS ───────────────────────────────────────── */
     .btn {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       background: var(--win-bg);
       border: 2px solid;
       border-color: var(--shadow1) var(--shadow2) var(--shadow2) var(--shadow1);
@@ -776,6 +780,8 @@
     #quick-status { font-size: 10px; color: var(--win-dark); font-style: italic; }
 
     #quick-toggle {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       background: var(--win-bg);
       border: 2px solid;
       border-color: var(--shadow1) var(--shadow2) var(--shadow2) var(--shadow1);
@@ -836,10 +842,10 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('log', event)">📝 Log Entry</button>
-    <button class="tab-btn" onclick="switchTab('archive', event)">🗂 Archive</button>
-    <button class="tab-btn" onclick="switchTab('poem', event)">✦ Found Poem</button>
-    <button class="tab-btn" onclick="switchTab('pdfs', event)">📚 PDF Oracle</button>
+    <button class="tab-btn active" onclick="switchTab('log', this)">📝 Log Entry</button>
+    <button class="tab-btn" onclick="switchTab('archive', this)">🗂 Archive</button>
+    <button class="tab-btn" onclick="switchTab('poem', this)">✦ Found Poem</button>
+    <button class="tab-btn" onclick="switchTab('pdfs', this)">📚 PDF Oracle</button>
   </div>
 
   <!-- Win body -->
@@ -1096,11 +1102,11 @@
   }
 
   // ── TABS ──────────────────────────────────────────────────────────────────
-  function switchTab(name, e) {
+  function switchTab(name, el) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
-    if (e && e.currentTarget) e.currentTarget.classList.add('active');
+    if (el) el.classList.add('active');
     if (name === 'archive') { renderArchive(); setTimeout(() => renderWordCloud(entries), 60); }
     if (name === 'pdfs') renderPdfList();
     setStatus(name.charAt(0).toUpperCase() + name.slice(1) + ' tab active');
@@ -1427,7 +1433,7 @@
 
   // ── WORD CLOUD ────────────────────────────────────────────────────────────
   const STOPWORDS = new Set([
-    'i','i've','me','my','myself','we','our','ours','ourselves','you','your','yours',
+    'i','me','my','myself','we','our','ours','ourselves','you','your','yours',
     'yourself','he','him','his','himself','she','her','hers','herself','it',
     'its','itself','they','them','their','theirs','themselves','what','which',
     'who','whom','this','that','these','those','am','is','are','was','were',
