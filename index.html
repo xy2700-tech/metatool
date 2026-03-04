@@ -810,6 +810,28 @@
 
 
 
+
+    .wc-range-btn {
+      background: var(--win-bg);
+      border: 2px solid;
+      border-color: var(--shadow1) var(--shadow2) var(--shadow2) var(--shadow1);
+      padding: 2px 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      color: var(--black);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wc-range-btn:active {
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+    }
+    .wc-range-btn.active {
+      background: var(--title-from);
+      color: var(--white);
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+    }
+
     /* POEM */
     .poem-window {
       border: 2px solid;
@@ -1034,8 +1056,18 @@
           <div class="empty-state">No entries yet. Begin listening.</div>
         </div>
         <div class="wordcloud-section" id="wordcloud-section" style="display:none; margin-top:20px;">
-          <div class="wordcloud-titlebar">☁ Words Across All Entries</div>
+          <div class="wordcloud-titlebar">
+            <span>☁ Words Across Entries</span>
+          </div>
+          <div style="background:var(--win-bg); border-bottom:1px solid var(--shadow2); padding:6px 12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--win-dark);">Range:</span>
+            <button class="wc-range-btn active" onclick="setWcRange('all', this)">All Time</button>
+            <button class="wc-range-btn" onclick="setWcRange('30', this)">Last 30 days</button>
+            <button class="wc-range-btn" onclick="setWcRange('14', this)">Last 14 days</button>
+            <button class="wc-range-btn" onclick="setWcRange('7', this)">Last 7 days</button>
+          </div>
           <div id="wordcloud-canvas"></div>
+          <div style="background:var(--win-bg); border-top:1px solid var(--shadow2); padding:3px 10px; font-size:10px; color:var(--win-dark); font-family:'Share Tech Mono',monospace;" id="wc-status"></div>
         </div>
       </div>
     </div>
@@ -1686,6 +1718,24 @@ ${combined}` }]
   });
 
   // ── WORD CLOUD ────────────────────────────────────────────────────────────
+  let wcRange = 'all';
+
+  function setWcRange(range, el) {
+    wcRange = range;
+    document.querySelectorAll('.wc-range-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderWordCloud(entries);
+  }
+
+  function filterEntriesByRange(ents, range) {
+    if (range === 'all') return ents;
+    const days = parseInt(range);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    return ents.filter(e => e.date >= cutoffStr);
+  }
+
   const STOPWORDS = new Set([
     'i','me','my','myself','we','our','ours','ourselves','you','your','yours',
     'yourself','he','him','his','himself','she','her','hers','herself','it',
@@ -1701,7 +1751,7 @@ ${combined}` }]
     'very','s','t','can','will','just','don','should','now','d','ll','m','o',
     're','ve','y','ain','aren','couldn','didn','doesn','hadn','hasn','haven',
     'isn','ma','mightn','mustn','needn','shan','shouldn','wasn','weren','won',
-    'wouldn','like','get','got','one','also','would','could','even','going',
+    'wouldn','i\'ve','ive','i\'m','im','i\'ll','ill','i\'d','id','like','get','got','one','also','would','could','even','going',
     'went','come','back','see','know','think','look','go','say','said','still',
     'well','around','really','much','many','something','anything','everything',
     'nothing','someone','anyone','everyone','maybe','though','already','always',
@@ -1729,8 +1779,20 @@ ${combined}` }]
   function renderWordCloud(ents) {
     const section = document.getElementById('wordcloud-section');
     const canvas = document.getElementById('wordcloud-canvas');
-    const words = buildWordFreq(ents);
-    if (words.length === 0) { section.style.display = 'none'; return; }
+    const filtered = filterEntriesByRange(ents, wcRange);
+    const words = buildWordFreq(filtered);
+    const statusEl = document.getElementById('wc-status');
+    if (words.length === 0) {
+      if (ents.length > 0) {
+        // Show section but empty state
+        section.style.display = 'block';
+        canvas.innerHTML = '<div style="text-align:center;padding:40px;font-style:italic;color:#aaa;font-family:'IM Fell English',serif;">No entries in this range yet.</div>';
+        if (statusEl) statusEl.textContent = '0 entries · 0 words';
+      } else {
+        section.style.display = 'none';
+      }
+      return;
+    }
     section.style.display = 'block';
     const maxC = words[0][1], minC = words[words.length-1][1];
     const colors = ['#000080','#800000','#006600','#000000','#404040','#008080'];
@@ -1762,6 +1824,7 @@ ${combined}` }]
       el.style.top = y + 'px';
       placed.push({x, y, ew, eh});
     });
+    if (statusEl) statusEl.textContent = `${filtered.length} entries · ${words.length} unique words`;
   }
 
   // ── UTILS ─────────────────────────────────────────────────────────────────
