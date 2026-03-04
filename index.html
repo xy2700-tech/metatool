@@ -173,10 +173,12 @@
     .tab-btn {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      -webkit-appearance: none;
+      appearance: none;
       background: var(--win-bg);
       border: 2px solid;
       border-color: var(--shadow1) var(--shadow2) var(--win-bg) var(--shadow1);
-      padding: 4px 14px 6px;
+      padding: 8px 14px 10px;
       font-family: 'Share Tech Mono', monospace;
       font-size: 12px;
       cursor: pointer;
@@ -184,6 +186,9 @@
       margin-bottom: -2px;
       position: relative;
       color: var(--black);
+      min-height: 44px;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .tab-btn.active {
@@ -977,10 +982,10 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('log', this)">📝 Log Entry</button>
-    <button class="tab-btn" onclick="switchTab('archive', this)">🗂 Archive</button>
-    <button class="tab-btn" onclick="switchTab('poem', this)">✦ Found Poem</button>
-    <button class="tab-btn" onclick="switchTab('pdfs', this)">📚 PDF Oracle</button>
+    <button class="tab-btn active" data-tab="log">📝 Log Entry</button>
+    <button class="tab-btn" data-tab="archive">🗂 Archive</button>
+    <button class="tab-btn" data-tab="poem">✦ Found Poem</button>
+    <button class="tab-btn" data-tab="pdfs">📚 PDF Oracle</button>
   </div>
 
   <!-- Win body -->
@@ -1052,10 +1057,7 @@
     <!-- ── ARCHIVE TAB ──────────────────────────── -->
     <div id="tab-archive" class="tab-panel">
       <div class="content-area">
-        <div class="entries-list" id="entries-list">
-          <div class="empty-state">No entries yet. Begin listening.</div>
-        </div>
-        <div class="wordcloud-section" id="wordcloud-section" style="display:none; margin-top:20px;">
+        <div class="wordcloud-section" id="wordcloud-section" style="display:none; margin-bottom:20px;">
           <div class="wordcloud-titlebar">
             <span>☁ Words Across Entries</span>
           </div>
@@ -1068,6 +1070,9 @@
           </div>
           <div id="wordcloud-canvas"></div>
           <div style="background:var(--win-bg); border-top:1px solid var(--shadow2); padding:3px 10px; font-size:10px; color:var(--win-dark); font-family:'Share Tech Mono',monospace;" id="wc-status"></div>
+        </div>
+        <div class="entries-list" id="entries-list">
+          <div class="empty-state">No entries yet. Begin listening.</div>
         </div>
       </div>
     </div>
@@ -1786,7 +1791,7 @@ ${combined}` }]
       if (ents.length > 0) {
         // Show section but empty state
         section.style.display = 'block';
-        canvas.innerHTML = '<div style="text-align:center;padding:40px;font-style:italic;color:#aaa;font-family:'IM Fell English',serif;">No entries in this range yet.</div>';
+        canvas.innerHTML = '<div style="text-align:center;padding:40px;font-style:italic;color:#aaa;font-family:&quot;IM Fell English&quot;,serif;">No entries in this range yet.</div>';
         if (statusEl) statusEl.textContent = '0 entries · 0 words';
       } else {
         section.style.display = 'none';
@@ -1833,6 +1838,26 @@ ${combined}` }]
     el.className = 'status-msg ' + type;
     setTimeout(() => { el.textContent = ''; el.className = 'status-msg'; }, 3500);
   }
+
+  // ── TAB LISTENERS (touch + click, works on iOS Safari) ───────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    function activate(e) {
+      e.preventDefault();
+      const name = btn.getAttribute('data-tab');
+      if (!name) return;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+      if (name === 'archive') { renderArchive(); setTimeout(() => renderWordCloud(entries), 60); }
+      if (name === 'pdfs') renderPdfList();
+      if (name === 'poem') {}
+      setStatus(name.charAt(0).toUpperCase() + name.slice(1) + ' tab active');
+    }
+    btn.addEventListener('touchend', activate, { passive: false });
+    btn.addEventListener('click', activate);
+  });
+
 </script>
 </body>
 </html>
