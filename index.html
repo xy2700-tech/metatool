@@ -1354,8 +1354,19 @@ Prompts should be specific, actionable listening/attention instructions for thei
       });
 
       const data = await response.json();
-      const raw = data.content[0].text.trim().replace(/^```json|^```|```$/gm, '').trim();
-      const parsed = JSON.parse(raw);
+      console.log('API response:', JSON.stringify(data));
+      if (!data.content || !data.content[0] || !data.content[0].text) {
+        throw new Error('No content in response: ' + JSON.stringify(data));
+      }
+      let raw = data.content[0].text.trim();
+      console.log('Raw text:', raw);
+      // Strip any markdown fences
+      raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+      // Find the JSON object even if there's surrounding text
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON object found in: ' + raw);
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('Parsed:', parsed);
 
       // Render connected entries
       if (entryA && entryB && entryA !== entryB) {
