@@ -552,44 +552,123 @@
     }
     .wc-word:hover { color: var(--accent) !important; text-decoration: underline; }
 
-    /* ── POEM ──────────────────────────────────────────── */
-    .poem-window {
-      border: 2px solid;
-      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
-      background: var(--white);
+// ── CONNECTIONS ───────────────────────────────────────────────────────────
+  let connectionsRunning = false;
+
+  async function runConnections() {
+    if (connectionsRunning) return;
+    if (entries.length === 0) {
+      document.getElementById('conn-entries').innerHTML = '<div style="color:#aaa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:32px 0;">No entries yet. Start logging to see connections.</div>';
+      return;
     }
 
-    .poem-titlebar {
-      background: linear-gradient(to right, var(--title-from), var(--title-to));
-      padding: 3px 8px;
-      font-family: 'VT323', monospace;
-      font-size: 15px;
-      color: var(--white);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    connectionsRunning = true;
+    setStatus('Finding connections...');
+
+    // Pick 2 random entries to connect (prefer non-adjacent dates)
+    const pool = entries.filter(e => e.text && e.text.trim().length > 20);
+    let entryA, entryB;
+    if (pool.length >= 2) {
+      const idxA = Math.floor(Math.random() * pool.length);
+      let idxB;
+      do { idxB = Math.floor(Math.random() * pool.length); } while (idxB === idxA);
+      entryA = pool[idxA];
+      entryB = pool[idxB];
+    } else if (pool.length === 1) {
+      entryA = entryB = pool[0];
     }
 
-    .poem-body {
-      padding: 28px 32px;
-      min-height: 200px;
-      font-family: 'IM Fell English', serif;
-      font-size: 17px;
-      line-height: 2.1;
-      color: var(--black);
-      text-align: center;
-      font-style: italic;
-      white-space: pre-wrap;
-    }
+    // Show loading state
+    const loadMsg = '<div style="color:#888;font-style:italic;font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0;">scanning the archive...</div>';
+    document.getElementById('conn-entries').innerHTML = loadMsg;
+    document.getElementById('conn-themes').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
+    document.getElementById('conn-reflection').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
+    document.getElementById('conn-prompts').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
 
-    .poem-footer {
-      background: var(--win-bg);
-      border-top: 1px solid var(--shadow2);
-      padding: 8px 12px;
-      display: flex;
-      justify-content: center;
-      gap: 8px;
+    // Build full archive summary for context
+    const allEntries = entries.filter(e => e.text).map(e => `[${e.date}]: ${e.text}`).join('\n\n');
+    const pairText = entryA && entryB && entryA !== entryB
+      ? `Entry A [${entryA.date}]:\n${entryA.text}\n\nEntry B [${entryB.date}]:\n${entryB.text}`
+      : allEntries.slice(0, 2000);
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1200,
+          messages: [{ role: 'user', content: `You are a thoughtful reader and attentional practice guide working with a design student at Columbia GSAPP who is practicing people-listening in the city as part of a course called Metatool: Attentional Mediums.
+
+Here are two journal entries from different days:
+
+${pairText}
+
+Here is the full archive of all entries for broader context:
+${allEntries.slice(0, 3000)}
+
+Respond ONLY with a JSON object (no markdown, no backticks) with exactly these four keys:
+
+{
+  "connection": "1-2 sentences on what links these two entries — a shared sensation, word, situation, tension, or invisible thread",
+  "themes": "3-5 themes you notice recurring across ALL the entries, each as a short phrase, separated by \n",
+  "reflection": "2-3 sentences on how the writer's attention or way of noticing seems to be shifting or developing over time",
+  "prompts": ["prompt 1", "prompt 2", "prompt 3"]
+}
+
+Prompts should be specific, actionable listening/attention instructions for their next session in the city. Make them surprising and generative, not generic.` }]
+        })
+      });
+
+      const data = await response.json();
+      const raw = data.content[0].text.trim().replace(/^```json|^```|```$/gm, '').trim();
+      const parsed = JSON.parse(raw);
+
+      // Render connected entries
+      if (entryA && entryB && entryA !== entryB) {
+        document.getElementById('conn-entries').innerHTML = `
+          <div class="conn-entry-card">
+            <div class="conn-entry-date">📅 ${formatDate(entryA.date)}</div>
+            <div class="conn-entry-text">${escHtml(entryA.text)}</div>
+          </div>
+          <div class="conn-entry-card">
+            <div class="conn-entry-date">📅 ${formatDate(entryB.date)}</div>
+            <div class="conn-entry-text">${escHtml(entryB.text)}</div>
+          </div>
+          <div class="conn-bridge">⟷ ${escHtml(parsed.connection)}</div>
+        `;
+      } else {
+        document.getElementById('conn-entries').innerHTML = `<div style="grid-column:1/-1;padding:12px;font-family:'IM Fell English',serif;font-size:14px;font-style:italic;">${escHtml(parsed.connection)}</div>`;
+      }
+
+      // Render themes
+      const themeLines = parsed.themes.split('\n').filter(Boolean);
+      document.getElementById('conn-themes').innerHTML = themeLines.map(t =>
+        `<div style="display:flex;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px dashed var(--shadow2);">
+          <span style="color:var(--title-from);font-family:'Share Tech Mono',monospace;font-size:11px;">◈</span>
+          <span>${escHtml(t.trim())}</span>
+        </div>`
+      ).join('');
+
+      // Render reflection
+      document.getElementById('conn-reflection').innerHTML = `<span>${escHtml(parsed.reflection)}</span>`;
+
+      // Render prompts
+      document.getElementById('conn-prompts').innerHTML = parsed.prompts.map((p, i) =>
+        `<div class="conn-prompt-item">
+          <span class="conn-prompt-num">${i+1}.</span>
+          <span>${escHtml(p)}</span>
+        </div>`
+      ).join('');
+
+      setStatus('Connections loaded');
+    } catch(err) {
+      console.error('Connections error:', err);
+      document.getElementById('conn-entries').innerHTML = '<div style="color:#888;font-style:italic;font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0;">Could not load connections. Check console.</div>';
+      setStatus('Error loading connections');
     }
+    connectionsRunning = false;
+  }
 
     /* ── PDF ORACLE ────────────────────────────────────── */
     .pdf-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
