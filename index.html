@@ -809,6 +809,68 @@
     }
 
 
+
+    /* POEM */
+    .poem-window {
+      border: 2px solid;
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+      background: var(--white);
+    }
+    .poem-titlebar {
+      background: linear-gradient(to right, var(--title-from), var(--title-to));
+      padding: 3px 8px;
+      font-family: 'VT323', monospace;
+      font-size: 15px;
+      color: var(--white);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .poem-body {
+      padding: 28px 32px;
+      min-height: 200px;
+      font-family: 'IM Fell English', serif;
+      font-size: 17px;
+      line-height: 2.4;
+      color: var(--black);
+      text-align: center;
+      font-style: italic;
+      background: var(--paper);
+    }
+    .poem-line {
+      display: block;
+      cursor: pointer;
+      padding: 1px 6px;
+      border-radius: 0;
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    }
+    .poem-line:hover {
+      background: var(--title-from);
+      color: var(--white);
+    }
+    .poem-line.active {
+      background: var(--title-from);
+      color: var(--white);
+    }
+    .poem-footer {
+      background: var(--win-bg);
+      border-top: 1px solid var(--shadow2);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .poem-hint {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--win-dark);
+      text-align: center;
+      padding: 6px 0 0;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
     /* CONNECTIONS */
     .conn-entry-card {
       background: var(--white);
@@ -895,7 +957,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('log', this)">📝 Log Entry</button>
     <button class="tab-btn" onclick="switchTab('archive', this)">🗂 Archive</button>
-    <button class="tab-btn" onclick="switchTab('connections', this)">✦ Connections</button>
+    <button class="tab-btn" onclick="switchTab('poem', this)">✦ Found Poem</button>
     <button class="tab-btn" onclick="switchTab('pdfs', this)">📚 PDF Oracle</button>
   </div>
 
@@ -978,42 +1040,34 @@
       </div>
     </div>
 
-    <!-- ── CONNECTIONS TAB ──────────────────────── -->
-    <div id="tab-connections" class="tab-panel">
+    <!-- ── POEM TAB ─────────────────────────────── -->
+    <div id="tab-poem" class="tab-panel">
       <div class="content-area">
-
-        <!-- Connected Entries -->
-        <div class="poem-window" style="margin-bottom:14px;">
-          <div class="poem-titlebar">
-            <span>⟷ Connected Entries</span>
-            <button class="btn" style="font-size:10px;padding:2px 10px;" onclick="runConnections()">⟳ Reshuffle</button>
-          </div>
-          <div id="conn-entries" style="padding:16px 18px; background:var(--paper); min-height:120px; display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div style="color:#aaa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:32px 0;">Loading connections...</div>
-          </div>
-        </div>
-
-        <!-- Themes -->
-        <div class="poem-window" style="margin-bottom:14px;">
-          <div class="poem-titlebar"><span>◈ Themes Noticed</span></div>
-          <div id="conn-themes" style="padding:16px 20px; background:var(--paper); min-height:60px; font-family:'IM Fell English',serif; font-size:15px; line-height:1.9;">
-            <span style="color:#aaa;font-style:italic;">...</span>
-          </div>
-        </div>
-
-        <!-- Attention reflection -->
-        <div class="poem-window" style="margin-bottom:14px;">
-          <div class="poem-titlebar"><span>◎ How Your Attention Is Shifting</span></div>
-          <div id="conn-reflection" style="padding:16px 20px; background:var(--paper); min-height:60px; font-family:'IM Fell English',serif; font-size:15px; line-height:1.9;">
-            <span style="color:#aaa;font-style:italic;">...</span>
-          </div>
-        </div>
-
-        <!-- Prompts -->
         <div class="poem-window">
-          <div class="poem-titlebar"><span>? Prompts for Your Next Session</span></div>
-          <div id="conn-prompts" style="padding:16px 20px; background:var(--paper); min-height:60px; font-family:'Share Tech Mono',monospace; font-size:12px; line-height:2;">
-            <span style="color:#aaa;font-style:italic;">...</span>
+          <div class="poem-titlebar">
+            <span>✦ Found Poem · From the Archive</span>
+            <span style="font-size:11px;font-family:'Share Tech Mono',monospace;color:rgba(255,255,255,0.7);" id="poem-status"></span>
+          </div>
+          <div class="poem-body" id="poem-output">
+            <span style="color:#aaa;font-size:14px;font-style:italic;">Generate a poem from your logged observations.</span>
+          </div>
+          <div class="poem-footer">
+            <button class="btn" onclick="generatePoem()">▶ Generate</button>
+            <button class="btn" onclick="generatePoem('random')">⟳ Shuffle & Remix</button>
+          </div>
+        </div>
+
+        <!-- Source entry popover -->
+        <div id="source-popover" style="display:none; margin-top:14px;">
+          <div class="poem-window">
+            <div class="poem-titlebar">
+              <span>📅 Source Entry</span>
+              <button class="modal-close" onclick="closeSourcePopover()">✕</button>
+            </div>
+            <div style="padding:16px 20px; background:var(--paper);">
+              <div id="source-date" style="font-family:'VT323',monospace;font-size:16px;color:var(--title-from);margin-bottom:8px;"></div>
+              <div id="source-text" style="font-family:'IM Fell English',serif;font-size:15px;line-height:1.9;white-space:pre-wrap;"></div>
+            </div>
           </div>
         </div>
 
@@ -1183,7 +1237,7 @@
     if (el) el.classList.add('active');
     if (name === 'archive') { renderArchive(); setTimeout(() => renderWordCloud(entries), 60); }
     if (name === 'pdfs') renderPdfList();
-    if (name === 'connections') runConnections();
+
     setStatus(name.charAt(0).toUpperCase() + name.slice(1) + ' tab active');
   }
 
@@ -1285,44 +1339,33 @@
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // ── CONNECTIONS ───────────────────────────────────────────────────────────
-  let connectionsRunning = false;
+  // ── POEM ──────────────────────────────────────────────────────────────────
+  // poemLines[i] = { text, sourceDate, sourceText }
+  let poemLines = [];
+  let activeLineEl = null;
 
-  async function runConnections() {
-    if (connectionsRunning) return;
+  async function generatePoem(mode) {
+    const poemEl = document.getElementById('poem-output');
+    const statusEl = document.getElementById('poem-status');
+    closeSourcePopover();
+
     if (entries.length === 0) {
-      document.getElementById('conn-entries').innerHTML = '<div style="color:#aaa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:32px 0;">No entries yet. Start logging to see connections.</div>';
+      poemEl.innerHTML = '<span style="color:#aaa;">No entries yet. Start logging first.</span>';
       return;
     }
 
-    connectionsRunning = true;
-    setStatus('Finding connections...');
-
-    // Pick 2 random entries to connect (prefer non-adjacent dates)
-    const pool = entries.filter(e => e.text && e.text.trim().length > 20);
-    let entryA, entryB;
-    if (pool.length >= 2) {
-      const idxA = Math.floor(Math.random() * pool.length);
-      let idxB;
-      do { idxB = Math.floor(Math.random() * pool.length); } while (idxB === idxA);
-      entryA = pool[idxA];
-      entryB = pool[idxB];
-    } else if (pool.length === 1) {
-      entryA = entryB = pool[0];
+    let pool = entries.filter(e => e.text && e.text.trim().length > 10);
+    if (pool.length === 0) {
+      poemEl.innerHTML = '<span style="color:#aaa;">No text entries found.</span>';
+      return;
     }
 
-    // Show loading state
-    const loadMsg = '<div style="color:#888;font-style:italic;font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0;">scanning the archive...</div>';
-    document.getElementById('conn-entries').innerHTML = loadMsg;
-    document.getElementById('conn-themes').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
-    document.getElementById('conn-reflection').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
-    document.getElementById('conn-prompts').innerHTML = '<span style="color:#aaa;font-style:italic;">...</span>';
+    if (mode === 'random') pool = pool.sort(() => Math.random() - 0.5);
+    const combined = pool.map(e => `[DATE:${e.date}] ${e.text}`).join('\n\n');
 
-    // Build full archive summary for context
-    const allEntries = entries.filter(e => e.text).map(e => `[${e.date}]: ${e.text}`).join('\n\n');
-    const pairText = entryA && entryB && entryA !== entryB
-      ? `Entry A [${entryA.date}]:\n${entryA.text}\n\nEntry B [${entryB.date}]:\n${entryB.text}`
-      : allEntries.slice(0, 2000);
+    poemEl.innerHTML = '<span style="color:#888;font-size:14px;font-style:italic;">listening to the archive...</span>';
+    statusEl.textContent = '';
+    poemLines = [];
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1331,87 +1374,135 @@
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1200,
-          messages: [{ role: 'user', content: `You are a thoughtful reader and attentional practice guide working with a design student at Columbia GSAPP who is practicing people-listening in the city as part of a course called Metatool: Attentional Mediums.
+          messages: [{ role: 'user', content: `You are a found-poetry composer in the spirit of Prefab Sprout's "I Trawl the Megahertz" — weaving overheard fragments, city sounds, and attentional observations into lyrical, atmospheric verse.
 
-Here are two journal entries from different days:
+From the journal entries below, compose a found poem of 8–16 lines. Each line must be a fragment drawn directly from one of the entries. Rearrange and juxtapose — but do not invent new words. Let white space breathe.
 
-${pairText}
+IMPORTANT: For each line, output it in this exact format:
+[DATE:YYYY-MM-DD] line text here
 
-Here is the full archive of all entries for broader context:
-${allEntries.slice(0, 3000)}
+Use the date of the entry the fragment came from. One line per row. No title, no explanation, nothing else.
 
-Respond ONLY with a JSON object (no markdown, no backticks) with exactly these four keys:
-
-{
-  "connection": "1-2 sentences on what links these two entries — a shared sensation, word, situation, tension, or invisible thread",
-  "themes": "3-5 themes you notice recurring across ALL the entries, each as a short phrase, separated by \n",
-  "reflection": "2-3 sentences on how the writer's attention or way of noticing seems to be shifting or developing over time",
-  "prompts": ["prompt 1", "prompt 2", "prompt 3"]
-}
-
-Prompts should be specific, actionable listening/attention instructions for their next session in the city. Make them surprising and generative, not generic.` }]
+Journal entries:
+${combined}` }]
         })
       });
 
       const data = await response.json();
-      console.log('API response:', JSON.stringify(data));
-      if (!data.content || !data.content[0] || !data.content[0].text) {
-        throw new Error('No content in response: ' + JSON.stringify(data));
-      }
-      let raw = data.content[0].text.trim();
-      console.log('Raw text:', raw);
-      // Strip any markdown fences
-      raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-      // Find the JSON object even if there's surrounding text
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON object found in: ' + raw);
-      const parsed = JSON.parse(jsonMatch[0]);
-      console.log('Parsed:', parsed);
+      if (!data.content || !data.content[0] || !data.content[0].text) throw new Error('No content');
 
-      // Render connected entries
-      if (entryA && entryB && entryA !== entryB) {
-        document.getElementById('conn-entries').innerHTML = `
-          <div class="conn-entry-card">
-            <div class="conn-entry-date">📅 ${formatDate(entryA.date)}</div>
-            <div class="conn-entry-text">${escHtml(entryA.text)}</div>
-          </div>
-          <div class="conn-entry-card">
-            <div class="conn-entry-date">📅 ${formatDate(entryB.date)}</div>
-            <div class="conn-entry-text">${escHtml(entryB.text)}</div>
-          </div>
-          <div class="conn-bridge">⟷ ${escHtml(parsed.connection)}</div>
-        `;
-      } else {
-        document.getElementById('conn-entries').innerHTML = `<div style="grid-column:1/-1;padding:12px;font-family:'IM Fell English',serif;font-size:14px;font-style:italic;">${escHtml(parsed.connection)}</div>`;
-      }
+      const raw = data.content[0].text.trim();
+      const parsed = parseAnnotatedPoem(raw, pool);
 
-      // Render themes
-      const themeLines = parsed.themes.split('\n').filter(Boolean);
-      document.getElementById('conn-themes').innerHTML = themeLines.map(t =>
-        `<div style="display:flex;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px dashed var(--shadow2);">
-          <span style="color:var(--title-from);font-family:'Share Tech Mono',monospace;font-size:11px;">◈</span>
-          <span>${escHtml(t.trim())}</span>
-        </div>`
-      ).join('');
+      if (parsed.length === 0) throw new Error('No lines parsed');
 
-      // Render reflection
-      document.getElementById('conn-reflection').innerHTML = `<span>${escHtml(parsed.reflection)}</span>`;
+      poemLines = parsed;
+      renderPoem();
+      statusEl.textContent = `${pool.length} entries · click a line to see its source`;
 
-      // Render prompts
-      document.getElementById('conn-prompts').innerHTML = parsed.prompts.map((p, i) =>
-        `<div class="conn-prompt-item">
-          <span class="conn-prompt-num">${i+1}.</span>
-          <span>${escHtml(p)}</span>
-        </div>`
-      ).join('');
-
-      setStatus('Connections loaded');
     } catch(err) {
-      console.error('Connections error:', err);
-      document.getElementById('conn-entries').innerHTML = '<div style="color:#888;font-style:italic;font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0;">Could not load connections. Check console.</div>';
-      setStatus('Error loading connections');
+      console.error('Poem error:', err);
+      // Fallback: local poem with source tracking
+      poemLines = localPoemWithSources(pool);
+      renderPoem();
+      statusEl.textContent = 'local remix · click a line to see its source';
     }
-    connectionsRunning = false;
+  }
+
+  function parseAnnotatedPoem(raw, pool) {
+    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    const result = [];
+    for (const line of lines) {
+      const match = line.match(/^\[DATE:(\d{4}-\d{2}-\d{2})\]\s*(.+)$/);
+      if (match) {
+        const date = match[1];
+        const text = match[2].trim();
+        const sourceEntry = pool.find(e => e.date === date) || pool.find(e => e.text && e.text.toLowerCase().includes(text.toLowerCase().slice(0, 15)));
+        result.push({ text, sourceDate: date, sourceText: sourceEntry ? sourceEntry.text : null });
+      } else if (line.length > 2) {
+        // Line without date annotation — try to find source by content match
+        const sourceEntry = pool.find(e => e.text && e.text.toLowerCase().includes(line.toLowerCase().slice(0, 15)));
+        result.push({ text: line, sourceDate: sourceEntry ? sourceEntry.date : null, sourceText: sourceEntry ? sourceEntry.text : null });
+      }
+    }
+    return result;
+  }
+
+  function localPoemWithSources(pool) {
+    const result = [];
+    pool.forEach(entry => {
+      if (!entry.text) return;
+      const sentences = entry.text.match(/[^.!?\n]+[.!?]?/g) || [];
+      sentences.forEach(s => {
+        s = s.trim();
+        if (s.length > 8 && s.length < 120) {
+          result.push({ text: s, sourceDate: entry.date, sourceText: entry.text });
+        }
+      });
+    });
+    return result.sort(() => Math.random() - 0.5).slice(0, 12);
+  }
+
+  function renderPoem() {
+    const poemEl = document.getElementById('poem-output');
+    if (poemLines.length === 0) {
+      poemEl.innerHTML = '<span style="color:#aaa;">Could not generate poem.</span>';
+      return;
+    }
+    poemEl.innerHTML =
+      '<div class="poem-hint" style="margin-bottom:12px;">click any line to see its source entry</div>' +
+      poemLines.map((line, i) =>
+        `<span class="poem-line" data-idx="${i}" onclick="showSource(${i}, this)">${escHtml(line.text)}</span>`
+      ).join('\n') +
+      '<div class="poem-hint" style="margin-top:12px;">↑ found fragments from your archive</div>';
+  }
+
+  function showSource(idx, el) {
+    const line = poemLines[idx];
+
+    // Toggle off if same line clicked again
+    if (activeLineEl === el) {
+      el.classList.remove('active');
+      activeLineEl = null;
+      closeSourcePopover();
+      return;
+    }
+
+    // Deactivate previous
+    if (activeLineEl) activeLineEl.classList.remove('active');
+    el.classList.add('active');
+    activeLineEl = el;
+
+    const popover = document.getElementById('source-popover');
+    const dateEl = document.getElementById('source-date');
+    const textEl = document.getElementById('source-text');
+
+    if (line.sourceDate) {
+      dateEl.textContent = '📅 ' + formatDate(line.sourceDate);
+    } else {
+      dateEl.textContent = 'Source unknown';
+    }
+
+    if (line.sourceText) {
+      // Highlight the fragment within the full entry text
+      const escaped = escHtml(line.sourceText);
+      const fragment = escHtml(line.text);
+      const highlighted = escaped.replace(
+        new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+        `<mark style="background:#ffd700;padding:0 2px;">${fragment}</mark>`
+      );
+      textEl.innerHTML = highlighted;
+    } else {
+      textEl.textContent = 'Could not locate source entry.';
+    }
+
+    popover.style.display = 'block';
+    popover.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closeSourcePopover() {
+    document.getElementById('source-popover').style.display = 'none';
+    if (activeLineEl) { activeLineEl.classList.remove('active'); activeLineEl = null; }
   }
 
   // ── PDF LIBRARY ───────────────────────────────────────────────────────────
