@@ -952,6 +952,108 @@
       flex-shrink: 0;
     }
 
+    /* ── THE RETURN TAB ────────────────────────────────── */
+    .return-op-label {
+      cursor: pointer;
+      display: block;
+    }
+
+    .return-op-card {
+      border: 2px solid;
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+      background: var(--white);
+      padding: 10px 14px;
+      transition: background 0.1s;
+    }
+
+    .return-op-card:hover {
+      background: #f0f8ff;
+    }
+
+    .return-op-card.active {
+      background: var(--title-from);
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+    }
+
+    .return-op-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--black);
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .return-op-card.active .return-op-title {
+      color: var(--white);
+    }
+
+    .return-op-desc {
+      font-family: 'IM Fell English', serif;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--win-dark);
+      font-style: italic;
+    }
+
+    .return-op-card.active .return-op-desc {
+      color: rgba(255,255,255,0.85);
+    }
+
+    .return-output-window {
+      border: 2px solid;
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+      background: var(--white);
+      margin-top: 4px;
+    }
+
+    .return-output-titlebar {
+      background: linear-gradient(to right, var(--title-from), var(--title-to));
+      padding: 3px 8px;
+      font-family: 'VT323', monospace;
+      font-size: 15px;
+      color: var(--white);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.05em;
+    }
+
+    .return-output-body {
+      padding: 28px 32px;
+      min-height: 180px;
+      font-family: 'IM Fell English', serif;
+      font-size: 16px;
+      line-height: 2.1;
+      color: var(--black);
+      background: var(--paper);
+      white-space: pre-wrap;
+    }
+
+    .return-thinking {
+      color: #aaa;
+      font-style: italic;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .return-thinking::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--title-from);
+      border-radius: 50%;
+      animation: blink-dot 1s infinite;
+    }
+
+    @keyframes blink-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.1; }
+    }
+
     @media (max-width: 520px) {
       .media-grid { grid-template-columns: 1fr 1fr; }
       .tabs { overflow-x: auto; flex-wrap: nowrap; }
@@ -989,6 +1091,7 @@
     <button class="tab-btn active" data-tab="log">📝 Log Entry</button>
     <button class="tab-btn" data-tab="archive">🗂 Archive</button>
     <button class="tab-btn" data-tab="poem">✦ Found Poem</button>
+    <button class="tab-btn" data-tab="return">📡 The Return</button>
     <button class="tab-btn" data-tab="pdfs">📚 PDF Oracle</button>
   </div>
 
@@ -1120,6 +1223,93 @@
             </div>
           </div>
         </div>
+
+      </div>
+    </div>
+
+    <!-- ── THE RETURN TAB ─────────────────────── -->
+    <div id="tab-return" class="tab-panel">
+      <div class="content-area">
+
+        <div class="site-header">
+          <div class="eyebrow">Cybernetic Feedback · Estranging Operations</div>
+          <h1>📡 <em>The Return</em></h1>
+          <div class="meta">select a time window · choose an operation · receive a transmission</div>
+        </div>
+
+        <!-- Time window selector -->
+        <div class="inset">
+          <div class="inset-label">Time Window</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="wc-range-btn active" onclick="setReturnRange('3', this)">Last 3 days</button>
+            <button class="wc-range-btn" onclick="setReturnRange('7', this)">Last 7 days</button>
+            <button class="wc-range-btn" onclick="setReturnRange('14', this)">Last 14 days</button>
+            <button class="wc-range-btn" onclick="setReturnRange('30', this)">Last 30 days</button>
+            <button class="wc-range-btn" onclick="setReturnRange('all', this)">All Time</button>
+          </div>
+          <div style="margin-top:10px; font-size:11px; color:var(--win-dark); font-style:italic;" id="return-entry-count">— entries in window</div>
+        </div>
+
+        <!-- Operation selector -->
+        <div class="inset">
+          <div class="inset-label">Estranging Operation</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+
+            <label class="return-op-label" onclick="selectReturnOp('acoustic', this)">
+              <input type="radio" name="return-op" value="acoustic" checked style="display:none;" />
+              <div class="return-op-card active" id="op-acoustic">
+                <div class="return-op-title">〰 Acoustic / Phonetic</div>
+                <div class="return-op-desc">Strip meaning. Render only sound — how the words sit in the mouth, their texture, rhythm, the breath between them. Language before sense.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre', this)">
+              <input type="radio" name="return-op" value="genre" style="display:none;" />
+              <div class="return-op-card" id="op-genre">
+                <div class="return-op-title">📄 Genre Translation</div>
+                <div class="return-op-desc">Recast the fragments as another form entirely — legal deposition, nature documentary voiceover, shipping manifest, liturgy. The mismatch reveals.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('scale', this)">
+              <input type="radio" name="return-op" value="scale" style="display:none;" />
+              <div class="return-op-card" id="op-scale">
+                <div class="return-op-title">🔬 Scale Shift</div>
+                <div class="return-op-desc">Zoom in or out. One sentence exploded into a full interior monologue — or all fragments collapsed into a single weather report for the city's emotional atmosphere.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('polyphonic', this)">
+              <input type="radio" name="return-op" value="polyphonic" style="display:none;" />
+              <div class="return-op-card" id="op-polyphonic">
+                <div class="return-op-title">🎼 Polyphonic Collapse</div>
+                <div class="return-op-desc">All voices spoken simultaneously — overlapping, interrupting, contrapuntal. A score rather than a sequence. The city as one unresolved chord.</div>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- Transmit button -->
+        <div class="btn-row" style="margin-bottom:16px;">
+          <button class="btn" onclick="generateReturn()">▶ Transmit</button>
+          <button class="btn" onclick="generateReturn('surprise')">⟳ Surprise Me</button>
+        </div>
+
+        <!-- Output window -->
+        <div class="return-output-window" id="return-output-window" style="display:none;">
+          <div class="return-output-titlebar">
+            <span id="return-output-op-label">transmission</span>
+            <span style="font-size:11px;font-family:'Share Tech Mono',monospace;color:rgba(255,255,255,0.6);" id="return-output-meta"></span>
+          </div>
+          <div class="return-output-body" id="return-output-body">
+          </div>
+          <div style="background:var(--win-bg); border-top:1px solid var(--shadow2); padding:6px 12px; font-size:10px; color:var(--win-dark); font-family:'Share Tech Mono',monospace; text-align:center; letter-spacing:0.08em; text-transform:uppercase;" id="return-output-footer">
+            end of transmission
+          </div>
+        </div>
+
+        <div class="status-msg" id="return-status" style="margin-top:8px;"></div>
 
       </div>
     </div>
@@ -1257,7 +1447,11 @@
 
   // ── INIT ──────────────────────────────────────────────────────────────────
   document.getElementById('entry-date').value = today();
-  loadEntries().then(data => { entries = data; setStatus('Ready · ' + data.length + ' entries loaded'); });
+  loadEntries().then(data => {
+    entries = data;
+    setStatus('Ready · ' + data.length + ' entries loaded');
+    updateReturnEntryCount();
+  });
   loadPdfLibrary();
   startClock();
 
@@ -1847,7 +2041,137 @@ ${combined}` }]
     if (statusEl) statusEl.textContent = `${filtered.length} entries · ${words.length} unique words`;
   }
 
-  // ── UTILS ─────────────────────────────────────────────────────────────────
+  // ── THE RETURN ────────────────────────────────────────────────────────────
+  let returnRange = '3';
+  let returnOp = 'acoustic';
+
+  const RETURN_OP_LABELS = {
+    acoustic:   '〰 Acoustic / Phonetic',
+    genre:      '📄 Genre Translation',
+    scale:      '🔬 Scale Shift',
+    polyphonic: '🎼 Polyphonic Collapse'
+  };
+
+  const RETURN_OP_PROMPTS = {
+    acoustic: `You are a poet of pure sound. You will receive fragments of overheard speech captured in a city.
+
+Your task: render these fragments as an acoustic / phonetic composition. Strip away meaning entirely. Write about how the words sound in the mouth — their texture, their breath, the sibilance or thud of consonants, the color of vowels, the rhythm of a sentence before you know what it means. Use line breaks as breath marks. Do not explain or interpret anything. Write as if you are a mouth before it becomes a mind.
+
+Format: free verse, 12–20 lines. No title. No commentary. Just the sound returning.`,
+
+    genre: `You are a genre translator. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: recast ALL of these fragments into a single coherent document in a completely unexpected genre. Choose one of the following genres and apply it rigorously — the mismatch between the intimate human content and the bureaucratic or formal register is where meaning lives:
+- A shipping manifest
+- A field report from a wildlife biologist observing an unfamiliar species
+- A legal deposition transcript
+- Instructions for assembling flat-pack furniture
+- A weather service bulletin
+- A liturgy or call-and-response prayer
+- A nature documentary voiceover
+
+Do not break the genre frame. Stay fully inside the chosen form. Begin directly — no preamble or explanation.`,
+
+    scale: `You are a scale-shifter. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: choose ONE of the following operations and apply it to the material:
+
+OPTION A — ZOOM IN: Select one fragment. Explode it into a full interior monologue for the speaker — what they were thinking before, during, and after saying those words. The monologue should be 200–300 words. Stay in first person. Do not explain what you are doing.
+
+OPTION B — ZOOM OUT: Treat all fragments together as data points. Write a single-paragraph "atmospheric report" for the city's collective emotional weather during this period — as if you were a meteorologist of human feeling. 80–120 words.
+
+Choose whichever option feels most true to the material. Begin directly.`,
+
+    polyphonic: `You are a composer of polyphonic text. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: score these voices as simultaneous utterances — a piece of writing where multiple voices speak at the same time, interrupt each other, overlap, and echo. Format it visually so the simultaneity is legible on the page. You might use columns, slashes, brackets, staggered indentation, or repeated phrases that cut across each other like voices in a crowded room.
+
+The goal is to collapse the sequence of days into a single moment — everything heard at once. No explanation. No narrative frame. Just the score.`
+  };
+
+  function setReturnRange(range, el) {
+    returnRange = range;
+    document.querySelectorAll('#tab-return .wc-range-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    updateReturnEntryCount();
+  }
+
+  function updateReturnEntryCount() {
+    const filtered = filterEntriesByRange(entries, returnRange);
+    const withText = filtered.filter(e => e.text && e.text.trim().length > 10);
+    const el = document.getElementById('return-entry-count');
+    if (el) el.textContent = `${withText.length} entries with text in this window`;
+  }
+
+  function selectReturnOp(op, labelEl) {
+    returnOp = op;
+    document.querySelectorAll('.return-op-card').forEach(c => c.classList.remove('active'));
+    const card = document.getElementById('op-' + op);
+    if (card) card.classList.add('active');
+  }
+
+  async function generateReturn(mode) {
+    const outputWindow = document.getElementById('return-output-window');
+    const outputBody = document.getElementById('return-output-body');
+    const outputOpLabel = document.getElementById('return-output-op-label');
+    const outputMeta = document.getElementById('return-output-meta');
+    const statusEl = document.getElementById('return-status');
+
+    // Surprise mode: pick a random op
+    let op = returnOp;
+    if (mode === 'surprise') {
+      const ops = ['acoustic', 'genre', 'scale', 'polyphonic'];
+      op = ops[Math.floor(Math.random() * ops.length)];
+      // Update UI to reflect chosen op
+      selectReturnOp(op, null);
+    }
+
+    const filtered = filterEntriesByRange(entries, returnRange);
+    const pool = filtered.filter(e => e.text && e.text.trim().length > 10);
+
+    if (pool.length === 0) {
+      showStatus(statusEl, 'No entries in this time window. Try a wider range.', 'error');
+      return;
+    }
+
+    // Show output window with loading state
+    outputWindow.style.display = 'block';
+    outputOpLabel.textContent = RETURN_OP_LABELS[op];
+    outputMeta.textContent = `${pool.length} entries · ${returnRange === 'all' ? 'all time' : 'last ' + returnRange + ' days'}`;
+    outputBody.innerHTML = '<div class="return-thinking">receiving transmission...</div>';
+    outputWindow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Build the fragments payload
+    const fragments = pool.map(e => `[${formatDate(e.date)}]\n${e.text.trim()}`).join('\n\n---\n\n');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1200,
+          messages: [{
+            role: 'user',
+            content: RETURN_OP_PROMPTS[op] + '\n\n--- OVERHEARD FRAGMENTS ---\n\n' + fragments
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (!data.content || !data.content[0] || !data.content[0].text) throw new Error('No content');
+
+      outputBody.textContent = data.content[0].text.trim();
+
+    } catch(err) {
+      console.error('Return error:', err);
+      outputBody.innerHTML = '<span style="color:var(--accent);font-size:13px;">Transmission failed. Check connection.</span>';
+    }
+  }
+
+  // ── END THE RETURN ────────────────────────────────────────────────────────
+
+
   function showStatus(el, msg, type) {
     el.textContent = msg;
     el.className = 'status-msg ' + type;
@@ -1866,6 +2190,7 @@ ${combined}` }]
       btn.classList.add('active');
       if (name === 'archive') { renderArchive(); setTimeout(() => renderWordCloud(entries), 60); }
       if (name === 'pdfs') renderPdfList();
+      if (name === 'return') { updateReturnEntryCount(); }
       if (name === 'poem') {}
       setStatus(name.charAt(0).toUpperCase() + name.slice(1) + ' tab active');
     }
