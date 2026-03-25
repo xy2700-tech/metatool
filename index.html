@@ -374,16 +374,23 @@
       cursor: pointer;
       position: relative;
       transition: background 0.1s;
+      /* Ensure clicks hit the zone on iOS */
+      -webkit-tap-highlight-color: transparent;
     }
     .upload-zone:hover { background: #f0f8ff; }
+    .upload-zone:active { background: #e0f0ff; }
     .upload-zone input[type="file"] {
       position: absolute;
       inset: 0;
       opacity: 0;
       cursor: pointer;
+      /* iOS Safari: make sure the input covers the full zone */
+      width: 100%;
+      height: 100%;
+      font-size: 16px; /* prevents iOS zoom on focus */
     }
-    .upload-zone .upload-icon { font-size: 22px; margin-bottom: 5px; display: block; }
-    .upload-zone .upload-text { font-size: 11px; color: var(--win-dark); text-transform: uppercase; }
+    .upload-zone .upload-icon { font-size: 22px; margin-bottom: 5px; display: block; pointer-events: none; }
+    .upload-zone .upload-text { font-size: 11px; color: var(--win-dark); text-transform: uppercase; pointer-events: none; }
 
     .media-preview {
       display: flex;
@@ -619,7 +626,7 @@
       color: var(--win-dark);
     }
     .pdf-upload-zone:hover { border-color: var(--title-from); }
-    .pdf-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .pdf-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; font-size: 16px; }
 
     /* ── EMPTY STATE ───────────────────────────────────── */
     .empty-state {
@@ -812,9 +819,6 @@
       border-bottom: 1px solid var(--shadow1);
       margin: 14px 0;
     }
-
-
-
 
     .wc-range-btn {
       background: var(--win-bg);
@@ -1014,18 +1018,27 @@
         <div class="inset">
           <div class="inset-label">Attach Media</div>
           <div class="media-grid">
-            <div class="upload-zone">
-              <input type="file" id="img-upload" accept="image/*" multiple onchange="handleMedia(event,'images')" />
+            <!-- Images -->
+            <div class="upload-zone" onclick="triggerFileInput('img-upload', event)">
+              <input type="file" id="img-upload" accept="image/*,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif" multiple onchange="handleMedia(event,'images')" />
               <span class="upload-icon">🖼</span>
               <div class="upload-text">Images</div>
             </div>
-            <div class="upload-zone">
-              <input type="file" id="vid-upload" accept="video/*" multiple onchange="handleMedia(event,'videos')" />
+            <!-- Videos -->
+            <div class="upload-zone" onclick="triggerFileInput('vid-upload', event)">
+              <input type="file" id="vid-upload" accept="video/*,video/mp4,video/quicktime,video/mov,.mp4,.mov,.m4v" multiple onchange="handleMedia(event,'videos')" />
               <span class="upload-icon">📹</span>
               <div class="upload-text">Videos</div>
             </div>
-            <div class="upload-zone">
-              <input type="file" id="aud-upload" accept="audio/*" multiple onchange="handleMedia(event,'audio')" />
+            <!-- Audio — fixed for iOS Safari -->
+            <div class="upload-zone" onclick="triggerFileInput('aud-upload', event)">
+              <input
+                type="file"
+                id="aud-upload"
+                accept="audio/*,audio/mpeg,audio/mp3,audio/mp4,audio/m4a,audio/aac,audio/wav,audio/x-wav,audio/ogg,audio/webm,audio/flac,.mp3,.m4a,.aac,.wav,.ogg,.webm,.flac,.caf"
+                multiple
+                onchange="handleMedia(event,'audio')"
+              />
               <span class="upload-icon">🎵</span>
               <div class="upload-text">Audio</div>
             </div>
@@ -1266,6 +1279,17 @@
     setInterval(tick, 10000);
   }
 
+  // ── FILE INPUT TRIGGER (iOS-safe) ─────────────────────────────────────────
+  // On iOS Safari, programmatic .click() on a hidden file input only works
+  // when called directly from a user gesture (touchend/click on the parent).
+  // We stop propagation so the event doesn't bubble back and double-fire.
+  function triggerFileInput(id, event) {
+    // Only trigger if the click didn't originate on the input itself
+    if (event && event.target && event.target.tagName === 'INPUT') return;
+    const input = document.getElementById(id);
+    if (input) input.click();
+  }
+
   // ── TABS ──────────────────────────────────────────────────────────────────
   function switchTab(name, el) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -1296,7 +1320,7 @@
     p.innerHTML = stagingMedia.map(m => {
       if (m.type === 'image') return `<img src="${m.dataUrl}" title="${m.name}" />`;
       if (m.type === 'video') return `<video src="${m.dataUrl}" controls style="width:72px;height:72px;object-fit:cover;"></video>`;
-      return `<div style="font-size:11px;color:#666;padding:3px 0;">🎵 ${m.name}</div>`;
+      return `<div style="font-size:11px;padding:4px 0;color:#444;">🎵 ${m.name}<br><audio src="${m.dataUrl}" controls style="width:100%;margin-top:3px;"></audio></div>`;
     }).join('');
   }
 
@@ -1377,7 +1401,6 @@
   }
 
   // ── POEM ──────────────────────────────────────────────────────────────────
-  // poemLines[i] = { text, sourceDate, sourceText }
   let poemLines = [];
   let activeLineEl = null;
 
@@ -1439,7 +1462,6 @@ ${combined}` }]
 
     } catch(err) {
       console.error('Poem error:', err);
-      // Fallback: local poem with source tracking
       poemLines = localPoemWithSources(pool);
       renderPoem();
       statusEl.textContent = 'local remix · click a line to see its source';
@@ -1457,7 +1479,6 @@ ${combined}` }]
         const sourceEntry = pool.find(e => e.date === date) || pool.find(e => e.text && e.text.toLowerCase().includes(text.toLowerCase().slice(0, 15)));
         result.push({ text, sourceDate: date, sourceText: sourceEntry ? sourceEntry.text : null });
       } else if (line.length > 2) {
-        // Line without date annotation — try to find source by content match
         const sourceEntry = pool.find(e => e.text && e.text.toLowerCase().includes(line.toLowerCase().slice(0, 15)));
         result.push({ text: line, sourceDate: sourceEntry ? sourceEntry.date : null, sourceText: sourceEntry ? sourceEntry.text : null });
       }
@@ -1496,16 +1517,12 @@ ${combined}` }]
 
   function showSource(idx, el) {
     const line = poemLines[idx];
-
-    // Toggle off if same line clicked again
     if (activeLineEl === el) {
       el.classList.remove('active');
       activeLineEl = null;
       closeSourcePopover();
       return;
     }
-
-    // Deactivate previous
     if (activeLineEl) activeLineEl.classList.remove('active');
     el.classList.add('active');
     activeLineEl = el;
@@ -1521,7 +1538,6 @@ ${combined}` }]
     }
 
     if (line.sourceText) {
-      // Highlight the fragment within the full entry text
       const escaped = escHtml(line.sourceText);
       const fragment = escHtml(line.text);
       const highlighted = escaped.replace(
@@ -1789,7 +1805,6 @@ ${combined}` }]
     const statusEl = document.getElementById('wc-status');
     if (words.length === 0) {
       if (ents.length > 0) {
-        // Show section but empty state
         section.style.display = 'block';
         canvas.innerHTML = '<div style="text-align:center;padding:40px;font-style:italic;color:#aaa;font-family:&quot;IM Fell English&quot;,serif;">No entries in this range yet.</div>';
         if (statusEl) statusEl.textContent = '0 entries · 0 words';
