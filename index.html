@@ -1464,9 +1464,9 @@
       </div>
     </div>
     <div class="key-body">
-      <div class="key-desc">Enter your Google Gemini API key to enable AI features (Found Poem &amp; The Return). Free at aistudio.google.com. Your key is stored locally in your browser only.</div>
-      <input type="text" id="key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" />
-      <div style="font-size:10px;color:var(--win-dark);font-family:Share Tech Mono,monospace;">Get a free key at aistudio.google.com → Get API Key</div>
+      <div class="key-desc">Enter your Groq API key to enable AI features (Found Poem &amp; The Return). Free at console.groq.com. Your key is stored locally in your browser only.</div>
+      <input type="text" id="key-input" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+      <div style="font-size:10px;color:var(--win-dark);font-family:Share Tech Mono,monospace;">Get a free key at console.groq.com → API Keys → Create API Key</div>
     </div>
     <div class="key-footer">
       <span id="key-status-msg"></span>
@@ -1496,7 +1496,7 @@
 <script>
   // ── SUPABASE ─────────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://agpjrtaohzgopydbdjfz.supabase.co';
-  function getGeminiKey() { return localStorage.getItem('metatool_gemini_key') || ''; }
+  function getGroqKey() { return localStorage.getItem('metatool_groq_key') || ''; }
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncGpydGFvaHpnb3B5ZGJkamZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5ODkwOTgsImV4cCI6MjA4NzU2NTA5OH0.70tmttIMj8eaa0JiFzgS_gqkqe12Wo0gkedySGWsjxE';
 
   async function sbFetch(path, options = {}) {
@@ -1699,7 +1699,7 @@
       return;
     }
 
-    if (!getGeminiKey()) { openKeyModal(); return; }
+    if (!getGroqKey()) { openKeyModal(); return; }
 
     let pool = entries.filter(e => e.text && e.text.trim().length > 10);
     if (pool.length === 0) {
@@ -1715,7 +1715,7 @@
     poemLines = [];
 
     try {
-      const geminiPoemPrompt = `You are a found-poetry composer in the spirit of Prefab Sprout's "I Trawl the Megahertz" — weaving overheard fragments, city sounds, and attentional observations into lyrical, atmospheric verse.
+      const poemPrompt = `You are a found-poetry composer in the spirit of Prefab Sprout's "I Trawl the Megahertz" — weaving overheard fragments, city sounds, and attentional observations into lyrical, atmospheric verse.
 
 From the journal entries below, compose a found poem of 8–16 lines. Each line must be a fragment drawn directly from one of the entries. Rearrange and juxtapose — but do not invent new words. Let white space breathe.
 
@@ -1727,23 +1727,24 @@ Use the date of the entry the fragment came from. One line per row. No title, no
 Journal entries:
 ${combined}`;
 
-      const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + getGeminiKey(),
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: geminiPoemPrompt }] }],
-            generationConfig: { maxOutputTokens: 1200 }
-          })
-        }
-      );
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + getGroqKey()
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 1200,
+          messages: [{ role: 'user', content: poemPrompt }]
+        })
+      });
 
       const data = await response.json();
-      if (data.error) throw new Error('API error ' + data.error.code + ': ' + data.error.message);
-      if (!data.candidates || !data.candidates[0]) throw new Error('No candidates in response');
+      if (data.error) throw new Error('API error ' + response.status + ': ' + data.error.message);
+      if (!data.choices || !data.choices[0]) throw new Error('No choices in response');
 
-      const raw = data.candidates[0].content.parts[0].text.trim();
+      const raw = data.choices[0].message.content.trim();
       const parsed = parseAnnotatedPoem(raw, pool);
 
       if (parsed.length === 0) throw new Error('No lines parsed');
@@ -2142,7 +2143,7 @@ ${combined}`;
 
   // ── API KEY MANAGEMENT ───────────────────────────────────────────────────
   function openKeyModal() {
-    const existing = localStorage.getItem('metatool_gemini_key') || '';
+    const existing = localStorage.getItem('metatool_groq_key') || '';
     document.getElementById('key-input').value = existing;
     const msg = document.getElementById('key-status-msg');
     msg.textContent = existing ? '✓ key already saved' : '';
@@ -2163,12 +2164,12 @@ ${combined}`;
       msg.className = 'err';
       return;
     }
-    if (val.length < 20) {
-      msg.textContent = 'That does not look like a valid key.';
+    if (!val.startsWith('gsk_')) {
+      msg.textContent = 'Key should start with gsk_...';
       msg.className = 'err';
       return;
     }
-    localStorage.setItem('metatool_gemini_key', val);
+    localStorage.setItem('metatool_groq_key', val);
     msg.textContent = '✓ Saved!';
     msg.className = 'ok';
     setTimeout(() => closeKeyModal(), 800);
@@ -2179,7 +2180,7 @@ ${combined}`;
   });
 
   // Show modal on first load if no key saved
-  if (!localStorage.getItem('metatool_gemini_key')) {
+  if (!localStorage.getItem('metatool_groq_key')) {
     setTimeout(() => openKeyModal(), 600);
   }
 
@@ -2270,7 +2271,7 @@ The goal is to collapse the sequence of days into a single moment — everything
       selectReturnOp(op, null);
     }
 
-    if (!getGeminiKey()) { openKeyModal(); return; }
+    if (!getGroqKey()) { openKeyModal(); return; }
 
     const filtered = filterEntriesByRange(entries, returnRange);
     const pool = filtered.filter(e => e.text && e.text.trim().length > 10);
@@ -2294,17 +2295,18 @@ The goal is to collapse the sequence of days into a single moment — everything
       outputBody.innerHTML = '<div class="return-thinking">contacting api...</div>';
       let response, data;
       try {
-        response = await fetch(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + getGeminiKey(),
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: RETURN_OP_PROMPTS[op] + '\n\n--- OVERHEARD FRAGMENTS ---\n\n' + fragments }] }],
-              generationConfig: { maxOutputTokens: 1200 }
-            })
-          }
-        );
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getGroqKey()
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            max_tokens: 1200,
+            messages: [{ role: 'user', content: RETURN_OP_PROMPTS[op] + '\n\n--- OVERHEARD FRAGMENTS ---\n\n' + fragments }]
+          })
+        });
       } catch(netErr) {
         throw new Error('Network error (CORS or no connection): ' + netErr.message);
       }
@@ -2313,10 +2315,10 @@ The goal is to collapse the sequence of days into a single moment — everything
       } catch(parseErr) {
         throw new Error('HTTP ' + response.status + ' — could not parse response');
       }
-      if (data.error) throw new Error('API error ' + data.error.code + ': ' + data.error.message);
-      if (!data.candidates || !data.candidates[0]) throw new Error('No candidates in response: ' + JSON.stringify(data).slice(0,120));
+      if (data.error) throw new Error('API error ' + response.status + ': ' + data.error.message);
+      if (!data.choices || !data.choices[0]) throw new Error('No choices in response: ' + JSON.stringify(data).slice(0,120));
 
-      outputBody.textContent = data.candidates[0].content.parts[0].text.trim();
+      outputBody.textContent = data.choices[0].message.content.trim();
 
     } catch(err) {
       console.error('Return error:', err);
