@@ -2144,20 +2144,24 @@ Based on the entries, name what this listener isn't hearing yet. Be direct and s
       outputBody.innerHTML = '<div class="return-thinking">contacting api...</div>';
       let response, data;
       try {
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 30000);
         response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
+          signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + getGroqKey()
           },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
-            max_tokens: 1200,
+            max_tokens: op === 'attentional_gaps' ? 600 : 1200,
             messages: [{ role: 'user', content: RETURN_OP_PROMPTS[op] + '\n\n--- OVERHEARD FRAGMENTS ---\n\n' + fragments }]
           })
         });
+        clearTimeout(fetchTimeout);
       } catch(netErr) {
-        throw new Error('Network error (CORS or no connection): ' + netErr.message);
+        throw new Error(netErr.name === 'AbortError' ? 'Request timed out after 30s — try a shorter time window' : 'Network error: ' + netErr.message);
       }
       try {
         data = await response.json();
@@ -2201,11 +2205,15 @@ Based on the entries, name what this listener isn't hearing yet. Be direct and s
     constCanvas = document.getElementById('constellation-canvas');
     if (!constCanvas) return;
     constCtx = constCanvas.getContext('2d');
-    // Set canvas pixel dimensions from its CSS layout size
     constCanvas.width = constCanvas.offsetWidth || 760;
     constCanvas.height = 500;
     if (constAnimFrame) { cancelAnimationFrame(constAnimFrame); constRunning = false; }
-    constNodes = []; // reset so positions are regenerated
+    constNodes = [];
+    // Re-attach events each time (safe to add multiple times with named functions)
+    constCanvas.removeEventListener('click', onConstClick);
+    constCanvas.removeEventListener('mousemove', onConstHover);
+    constCanvas.addEventListener('click', onConstClick);
+    constCanvas.addEventListener('mousemove', onConstHover);
     buildConstellation();
   }
 
@@ -2423,14 +2431,7 @@ Based on the entries, name what this listener isn't hearing yet. Be direct and s
     constNodes.forEach(n => n.selected = false);
   }
 
-  // Wire up canvas events once DOM ready
-  document.addEventListener('DOMContentLoaded', () => {
-    const cv = document.getElementById('constellation-canvas');
-    if (cv) {
-      cv.addEventListener('click', onConstClick);
-      cv.addEventListener('mousemove', onConstHover);
-    }
-  });
+  // canvas events wired in initConstellation
   // ── END CONSTELLATION ─────────────────────────────────────────────────────
 
   function showStatus(el, msg, type) {
