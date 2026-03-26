@@ -1391,6 +1391,14 @@
               </div>
             </label>
 
+            <label class="return-op-label" onclick="selectReturnOp('attentional_gaps', this)">
+              <input type="radio" name="return-op" value="attentional_gaps" style="display:none;" />
+              <div class="return-op-card" id="op-attentional_gaps">
+                <div class="return-op-title">🗺 Attentional Gaps</div>
+                <div class="return-op-desc">What is happening in New York right now that you haven't been hearing. The city's seasonal life mapped against the silences in your archive.</div>
+              </div>
+            </label>
+
           </div>
         </div>
 
@@ -2239,7 +2247,8 @@ ${combined}`;
     genre_manifest:  '📦 Shipping Manifest',
     genre_nature_doc:'🎙 Nature Documentary',
     scale:           '🔬 Scale Shift',
-    polyphonic:      '🎼 Polyphonic Collapse'
+    polyphonic:      '🎼 Polyphonic Collapse',
+    attentional_gaps:'🗺 Attentional Gaps'
   };
 
   const RETURN_OP_PROMPTS = {
@@ -2299,7 +2308,21 @@ Choose whichever option feels most true to the material. Begin directly.`,
 
 Your task: score these voices as simultaneous utterances — a piece of writing where multiple voices speak at the same time, interrupt each other, overlap, and echo. Format it visually so the simultaneity is legible on the page. You might use columns, slashes, brackets, staggered indentation, or repeated phrases that cut across each other like voices in a crowded room.
 
-The goal is to collapse the sequence of days into a single moment — everything heard at once. No explanation. No narrative frame. Just the score.`
+The goal is to collapse the sequence of days into a single moment — everything heard at once. No explanation. No narrative frame. Just the score.`,
+
+    attentional_gaps: `You are an expert on New York City's seasonal, cultural, and street life, with deep knowledge of what the city sounds and feels like at different times of year — its rhythms, its migrations of people, its recurring rituals, its ambient textures by neighborhood, season, and weather.
+
+Today's date is ${new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}.
+
+You will receive journal entries from someone who has been practicing attentional listening in New York City — logging overheard conversations, sounds, and observations. Your task has two parts:
+
+PART 1 — WHAT THE CITY IS DOING RIGHT NOW:
+Based on the current date and your knowledge of New York, write 4–6 specific, sensory observations about what is happening in the city right now that a careful listener might encounter. Think: seasonal sounds, recurring human rituals, neighborhood-specific phenomena, things that only happen at this time of year. Be specific — not "people are going to work" but the texture of a particular moment. Format as a numbered list.
+
+PART 2 — GAPS IN YOUR ARCHIVE:
+Based on the journal entries provided, identify 3–5 specific things the listener seems to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
+
+Be concrete. Be specific to New York. Be specific to this moment in the year.`
   };
 
   function setReturnRange(range, el) {
@@ -2333,7 +2356,7 @@ The goal is to collapse the sequence of days into a single moment — everything
     // Surprise mode: pick a random op
     let op = returnOp;
     if (mode === 'surprise') {
-      const ops = ['genre_wildlife', 'genre_legal', 'genre_liturgy', 'genre_manual', 'genre_weather', 'genre_manifest', 'genre_nature_doc', 'scale', 'polyphonic'];
+      const ops = ['genre_wildlife', 'genre_legal', 'genre_liturgy', 'genre_manual', 'genre_weather', 'genre_manifest', 'genre_nature_doc', 'scale', 'polyphonic', 'attentional_gaps'];
       op = ops[Math.floor(Math.random() * ops.length)];
       // Update UI to reflect chosen op
       selectReturnOp(op, null);
