@@ -952,6 +952,70 @@
       flex-shrink: 0;
     }
 
+
+    /* ── API KEY MODAL ─────────────────────────────────── */
+    #key-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,128,0.5);
+      z-index: 20000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #key-modal-overlay.open { display: flex; }
+    #key-modal {
+      background: var(--win-bg);
+      border: 2px solid;
+      border-color: var(--shadow1) var(--shadow2) var(--shadow2) var(--shadow1);
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 4px 4px 0 var(--black);
+    }
+    #key-modal .key-body {
+      padding: 20px 22px;
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #key-modal .key-desc {
+      font-family: "IM Fell English", serif;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--black);
+      font-style: italic;
+    }
+    #key-modal input[type="text"] {
+      width: 100%;
+      background: var(--white);
+      border: 2px solid;
+      border-color: var(--shadow2) var(--shadow1) var(--shadow1) var(--shadow2);
+      padding: 7px 10px;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 12px;
+      color: var(--black);
+      outline: none;
+      letter-spacing: 0.03em;
+    }
+    #key-modal .key-footer {
+      background: var(--win-bg);
+      border-top: 1px solid var(--shadow2);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    #key-status-msg {
+      font-size: 11px;
+      color: var(--win-dark);
+      font-style: italic;
+    }
+    #key-status-msg.ok { color: #006600; }
+    #key-status-msg.err { color: var(--accent); }
+
     /* ── THE RETURN TAB ────────────────────────────────── */
     .return-op-label {
       cursor: pointer;
@@ -1389,9 +1453,35 @@
 </div>
 
 
+
+<!-- API KEY MODAL -->
+<div id="key-modal-overlay" class="">
+  <div id="key-modal">
+    <div class="win-titlebar">
+      <div class="win-title"><span>🔑</span> Anthropic API Key</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="closeKeyModal()">✕</button>
+      </div>
+    </div>
+    <div class="key-body">
+      <div class="key-desc">Enter your Anthropic API key to enable AI features (Found Poem &amp; The Return). Your key is stored locally in your browser only — never sent anywhere except directly to Anthropic.</div>
+      <input type="text" id="key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" />
+      <div style="font-size:10px;color:var(--win-dark);font-family:Share Tech Mono,monospace;">Get a key at console.anthropic.com → API Keys</div>
+    </div>
+    <div class="key-footer">
+      <span id="key-status-msg"></span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" onclick="saveApiKey()">💾 Save Key</button>
+        <button class="btn" onclick="closeKeyModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TASKBAR -->
 <div id="taskbar">
   <button id="start-btn">🪟 Start</button>
+  <button id="key-btn" onclick="openKeyModal()" title="Set API Key" style="background:var(--win-bg);border:2px solid;border-color:var(--shadow1) var(--shadow2) var(--shadow2) var(--shadow1);padding:2px 8px;font-family:Share Tech Mono,monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">🔑 API Key</button>
   <div class="taskbar-clock" id="taskbar-clock">00:00</div>
 </div>
 
@@ -1406,6 +1496,7 @@
 <script>
   // ── SUPABASE ─────────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://agpjrtaohzgopydbdjfz.supabase.co';
+  function getAnthropicKey() { return localStorage.getItem('metatool_anthropic_key') || ''; }
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFncGpydGFvaHpnb3B5ZGJkamZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5ODkwOTgsImV4cCI6MjA4NzU2NTA5OH0.70tmttIMj8eaa0JiFzgS_gqkqe12Wo0gkedySGWsjxE';
 
   async function sbFetch(path, options = {}) {
@@ -1608,6 +1699,8 @@
       return;
     }
 
+    if (!getAnthropicKey()) { openKeyModal(); return; }
+
     let pool = entries.filter(e => e.text && e.text.trim().length > 10);
     if (pool.length === 0) {
       poemEl.innerHTML = '<span style="color:#aaa;">No text entries found.</span>';
@@ -1627,7 +1720,8 @@
         headers: {
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'anthropic-dangerous-direct-browser-access': 'true',
+          'x-api-key': getAnthropicKey()
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
@@ -2045,6 +2139,52 @@ ${combined}` }]
     if (statusEl) statusEl.textContent = `${filtered.length} entries · ${words.length} unique words`;
   }
 
+
+  // ── API KEY MANAGEMENT ───────────────────────────────────────────────────
+  function openKeyModal() {
+    const existing = localStorage.getItem('metatool_anthropic_key') || '';
+    document.getElementById('key-input').value = existing;
+    const msg = document.getElementById('key-status-msg');
+    msg.textContent = existing ? '✓ key already saved' : '';
+    msg.className = existing ? 'ok' : '';
+    document.getElementById('key-modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('key-input').focus(), 80);
+  }
+
+  function closeKeyModal() {
+    document.getElementById('key-modal-overlay').classList.remove('open');
+  }
+
+  function saveApiKey() {
+    const val = document.getElementById('key-input').value.trim();
+    const msg = document.getElementById('key-status-msg');
+    if (!val) {
+      msg.textContent = 'Please enter a key.';
+      msg.className = 'err';
+      return;
+    }
+    if (!val.startsWith('sk-ant-')) {
+      msg.textContent = 'Key should start with sk-ant-...';
+      msg.className = 'err';
+      return;
+    }
+    localStorage.setItem('metatool_anthropic_key', val);
+    msg.textContent = '✓ Saved!';
+    msg.className = 'ok';
+    setTimeout(() => closeKeyModal(), 800);
+  }
+
+  document.getElementById('key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveApiKey();
+  });
+
+  // Show modal on first load if no key saved
+  if (!localStorage.getItem('metatool_anthropic_key')) {
+    setTimeout(() => openKeyModal(), 600);
+  }
+
+  // ── END API KEY MANAGEMENT ───────────────────────────────────────────────
+
   // ── THE RETURN ────────────────────────────────────────────────────────────
   let returnRange = '3';
   let returnOp = 'acoustic';
@@ -2130,6 +2270,8 @@ The goal is to collapse the sequence of days into a single moment — everything
       selectReturnOp(op, null);
     }
 
+    if (!getAnthropicKey()) { openKeyModal(); return; }
+
     const filtered = filterEntriesByRange(entries, returnRange);
     const pool = filtered.filter(e => e.text && e.text.trim().length > 10);
 
@@ -2157,7 +2299,8 @@ The goal is to collapse the sequence of days into a single moment — everything
           headers: {
             'Content-Type': 'application/json',
             'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
+            'anthropic-dangerous-direct-browser-access': 'true',
+            'x-api-key': getAnthropicKey()
           },
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
