@@ -1319,19 +1319,59 @@
           <div class="inset-label">Estranging Operation</div>
           <div style="display:flex; flex-direction:column; gap:8px;">
 
-            <label class="return-op-label" onclick="selectReturnOp('acoustic', this)">
-              <input type="radio" name="return-op" value="acoustic" checked style="display:none;" />
-              <div class="return-op-card active" id="op-acoustic">
-                <div class="return-op-title">〰 Acoustic / Phonetic</div>
-                <div class="return-op-desc">Strip meaning. Render only sound — how the words sit in the mouth, their texture, rhythm, the breath between them. Language before sense.</div>
+            <label class="return-op-label" onclick="selectReturnOp('genre_wildlife', this)">
+              <input type="radio" name="return-op" value="genre_wildlife" checked style="display:none;" />
+              <div class="return-op-card active" id="op-genre_wildlife">
+                <div class="return-op-title">🦎 Wildlife Field Report</div>
+                <div class="return-op-desc">A biologist observing an unfamiliar urban species. Clinical detachment applied to intimate human speech.</div>
               </div>
             </label>
 
-            <label class="return-op-label" onclick="selectReturnOp('genre', this)">
-              <input type="radio" name="return-op" value="genre" style="display:none;" />
-              <div class="return-op-card" id="op-genre">
-                <div class="return-op-title">📄 Genre Translation</div>
-                <div class="return-op-desc">Recast the fragments as another form entirely — legal deposition, nature documentary voiceover, shipping manifest, liturgy. The mismatch reveals.</div>
+            <label class="return-op-label" onclick="selectReturnOp('genre_legal', this)">
+              <input type="radio" name="return-op" value="genre_legal" style="display:none;" />
+              <div class="return-op-card" id="op-genre_legal">
+                <div class="return-op-title">⚖ Legal Deposition</div>
+                <div class="return-op-desc">Every fragment entered into the record as sworn testimony. The weight of law applied to overheard breath.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre_liturgy', this)">
+              <input type="radio" name="return-op" value="genre_liturgy" style="display:none;" />
+              <div class="return-op-card" id="op-genre_liturgy">
+                <div class="return-op-title">🕯 Liturgy</div>
+                <div class="return-op-desc">Call and response. Fragments as sacred text, congregation and cantor. The street as cathedral.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre_manual', this)">
+              <input type="radio" name="return-op" value="genre_manual" style="display:none;" />
+              <div class="return-op-card" id="op-genre_manual">
+                <div class="return-op-title">🔧 Instruction Manual</div>
+                <div class="return-op-desc">How to assemble a human interaction, step by step. Safety warnings included. Warranty void if feelings involved.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre_weather', this)">
+              <input type="radio" name="return-op" value="genre_weather" style="display:none;" />
+              <div class="return-op-card" id="op-genre_weather">
+                <div class="return-op-title">🌦 Weather Service Bulletin</div>
+                <div class="return-op-desc">An official forecast of the city's emotional atmosphere. Fronts, pressure systems, advisories for the week ahead.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre_manifest', this)">
+              <input type="radio" name="return-op" value="genre_manifest" style="display:none;" />
+              <div class="return-op-card" id="op-genre_manifest">
+                <div class="return-op-title">📦 Shipping Manifest</div>
+                <div class="return-op-desc">Every overheard phrase logged as cargo. Origin, destination, condition, declared value. Language as goods in transit.</div>
+              </div>
+            </label>
+
+            <label class="return-op-label" onclick="selectReturnOp('genre_nature_doc', this)">
+              <input type="radio" name="return-op" value="genre_nature_doc" style="display:none;" />
+              <div class="return-op-card" id="op-genre_nature_doc">
+                <div class="return-op-title">🎙 Nature Documentary</div>
+                <div class="return-op-desc">Attenborough-voiced narration of human behavior in its natural habitat. Slow, reverent, mildly bewildered.</div>
               </div>
             </label>
 
@@ -2188,34 +2228,62 @@ ${combined}`;
 
   // ── THE RETURN ────────────────────────────────────────────────────────────
   let returnRange = '3';
-  let returnOp = 'acoustic';
+  let returnOp = 'genre_wildlife';
 
   const RETURN_OP_LABELS = {
-    acoustic:   '〰 Acoustic / Phonetic',
-    genre:      '📄 Genre Translation',
-    scale:      '🔬 Scale Shift',
-    polyphonic: '🎼 Polyphonic Collapse'
+    genre_wildlife:  '🦎 Wildlife Field Report',
+    genre_legal:     '⚖ Legal Deposition',
+    genre_liturgy:   '🕯 Liturgy',
+    genre_manual:    '🔧 Instruction Manual',
+    genre_weather:   '🌦 Weather Service Bulletin',
+    genre_manifest:  '📦 Shipping Manifest',
+    genre_nature_doc:'🎙 Nature Documentary',
+    scale:           '🔬 Scale Shift',
+    polyphonic:      '🎼 Polyphonic Collapse'
   };
 
   const RETURN_OP_PROMPTS = {
-    acoustic: `You are a poet of pure sound. You will receive fragments of overheard speech captured in a city.
+    genre_wildlife: `You are writing a wildlife field report. You will receive fragments of overheard human speech captured across different days in a city.
 
-Your task: render these fragments as an acoustic / phonetic composition. Strip away meaning entirely. Write about how the words sound in the mouth — their texture, their breath, the sibilance or thud of consonants, the color of vowels, the rhythm of a sentence before you know what it means. Use line breaks as breath marks. Do not explain or interpret anything. Write as if you are a mouth before it becomes a mind.
+Your task: write a formal field report from a biologist who has been observing an unfamiliar urban species — Homo sapiens sapiens — in its natural habitat. Use precise, clinical scientific register. Describe behaviors, vocalizations, social dynamics, and territorial markers as if encountering them for the first time. Quote fragments verbatim as "recorded vocalizations." Include sections: Observation Conditions, Behavioral Notes, Recorded Vocalizations, Preliminary Hypotheses.
 
-Format: free verse, 12–20 lines. No title. No commentary. Just the sound returning.`,
+Do not break the frame. Begin directly with the report header.`,
 
-    genre: `You are a genre translator. You will receive fragments of overheard speech captured across different days in a city.
+    genre_legal: `You are a court reporter. You will receive fragments of overheard speech captured across different days in a city.
 
-Your task: recast ALL of these fragments into a single coherent document in a completely unexpected genre. Choose one of the following genres and apply it rigorously — the mismatch between the intimate human content and the bureaucratic or formal register is where meaning lives:
-- A shipping manifest
-- A field report from a wildlife biologist observing an unfamiliar species
-- A legal deposition transcript
-- Instructions for assembling flat-pack furniture
-- A weather service bulletin
-- A liturgy or call-and-response prayer
-- A nature documentary voiceover
+Your task: render ALL of these fragments as a legal deposition transcript. Each fragment becomes sworn testimony entered into the record. Include: case number, date, witness designation (Witness A, Witness B, etc.), examination by counsel, objections, and judge's rulings where appropriate. The content should remain unchanged — only the frame shifts. The mundane becomes evidence.
 
-Do not break the genre frame. Stay fully inside the chosen form. Begin directly — no preamble or explanation.`,
+Stay fully inside the legal transcript form. Begin directly with the case header.`,
+
+    genre_liturgy: `You are a liturgical composer. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: recast these fragments as a call-and-response liturgy — a sacred text for an unnamed congregation. Assign some fragments to a cantor or priest voice, others to the congregation's response. Add refrains, doxologies, moments of silence marked as [silence]. The street becomes a cathedral. The overheard becomes scripture.
+
+Stay fully inside the liturgical form. No explanation. Begin directly.`,
+
+    genre_manual: `You are a technical writer. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: write a complete instruction manual for assembling or operating "a human interaction" — using these fragments as source material. Include: safety warnings, a parts list, numbered assembly steps, a troubleshooting guide, and warranty information. Each overheard phrase should appear somewhere in the manual as either instruction, warning, or example output.
+
+Use dry, precise technical writing register throughout. Begin directly with the manual cover page.`,
+
+    genre_weather: `You are a meteorologist of human emotion. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: write an official weather service bulletin for the city's emotional atmosphere during this period. Include: a forecast summary, pressure systems (high anxiety, low affect, etc.), fronts moving through, visibility conditions, advisories and warnings for vulnerable populations, and a 7-day outlook. Ground all observations in specific fragments from the entries.
+
+Use official weather bulletin format and register. Begin directly.`,
+
+    genre_manifest: `You are a logistics officer. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: produce a shipping manifest in which every overheard phrase is logged as cargo. For each item include: item number, description of goods, origin location, destination, condition on receipt, declared value, handling instructions, and any damage notes. Language is goods in transit. Meaning is declared, not assumed.
+
+Use formal logistics/customs document format throughout. Begin directly with the manifest header.`,
+
+    genre_nature_doc: `You are writing a nature documentary narration in the style of David Attenborough. You will receive fragments of overheard speech captured across different days in a city.
+
+Your task: narrate the human behaviors and vocalizations captured in these fragments as if observing a newly discovered species in the wild. Use slow, reverent, gently bewildered prose. Quote fragments as observed vocalizations. Note patterns of social bonding, resource competition, display behaviors, and territorial marking. The tone is warm but scientifically detached.
+
+Write as continuous narration, no headers. Begin mid-scene, as if the camera has just found something remarkable.`,
 
     scale: `You are a scale-shifter. You will receive fragments of overheard speech captured across different days in a city.
 
@@ -2265,7 +2333,7 @@ The goal is to collapse the sequence of days into a single moment — everything
     // Surprise mode: pick a random op
     let op = returnOp;
     if (mode === 'surprise') {
-      const ops = ['acoustic', 'genre', 'scale', 'polyphonic'];
+      const ops = ['genre_wildlife', 'genre_legal', 'genre_liturgy', 'genre_manual', 'genre_weather', 'genre_manifest', 'genre_nature_doc', 'scale', 'polyphonic'];
       op = ops[Math.floor(Math.random() * ops.length)];
       // Update UI to reflect chosen op
       selectReturnOp(op, null);
