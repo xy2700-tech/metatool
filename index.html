@@ -2070,19 +2070,17 @@ Your task: score these voices as simultaneous utterances — a piece of writing 
 
 The goal is to collapse the sequence of days into a single moment — everything heard at once. No explanation. No narrative frame. Just the score.`,
 
-    attentional_gaps: `You are an expert on New York City's seasonal, cultural, and street life, with deep knowledge of what the city sounds and feels like at different times of year — its rhythms, its migrations of people, its recurring rituals, its ambient textures by neighborhood, season, and weather.
+    attentional_gaps: `You are a naturalist and urban field guide for New York City, with precise knowledge of the city's seasonal ecology, street life, and human rhythms.
 
-Today's date is ${new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}.
+Today is ${new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}.
 
-You will receive journal entries from someone who has been practicing attentional listening in New York City — logging overheard conversations, sounds, and observations. Your task has two parts:
+You will receive journal entries from someone practicing attentional listening in NYC. Respond in two short sections — be specific, be concise, no padding.
 
-PART 1 — WHAT THE CITY IS DOING RIGHT NOW:
-Based on the current date and your knowledge of New York, write 4–6 specific, sensory observations about what is happening in the city right now that a careful listener might encounter. Think: seasonal sounds, recurring human rituals, neighborhood-specific phenomena, things that only happen at this time of year. Be specific — not "people are going to work" but the texture of a particular moment. Format as a numbered list.
+PART 1 — WHAT'S OUT THERE RIGHT NOW (6–8 bullet points):
+Name exactly what is present in New York's natural and street environment at this precise moment in the year. Lead with birds — name specific species, their calls, where they appear (e.g. "American woodcocks performing their sky dance at dusk in Prospect Park's fields"). Include: migrating or resident birds by name, specific plants currently blooming or leafing, insects emerging, what the light and air feel like this week, one or two hyper-specific human street rituals tied to this season. Every bullet should be something a person could go outside and find today.
 
-PART 2 — GAPS IN YOUR ARCHIVE:
-Based on the journal entries provided, identify 3–5 specific things the listener seems to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
-
-Be concrete. Be specific to New York. Be specific to this moment in the year.`
+PART 2 — YOUR GAPS (3–4 bullet points):
+Based on the entries, name what this listener isn't hearing yet. Be direct and specific — name the missing voice, place, time, species, or register. Frame as invitations: "you haven't logged the sound of..." or "absent from your archive:"`
   };
 
   function setReturnRange(range, el) {
