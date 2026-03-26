@@ -2178,6 +2178,261 @@ Based on the entries, name what this listener isn't hearing yet. Be direct and s
   // ── END THE RETURN ────────────────────────────────────────────────────────
 
 
+
+  // ── CONSTELLATION ────────────────────────────────────────────────────────
+  let constMode = 'words';
+  let constNodes = [];
+  let constEdges = [];
+  let constAnimFrame = null;
+  let constSelected = null;
+  let constCanvas = null;
+  let constCtx = null;
+  let constRunning = false;
+
+  function setConstellationMode(mode, el) {
+    constMode = mode;
+    document.querySelectorAll('#tab-constellation .wc-range-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (constAnimFrame) { cancelAnimationFrame(constAnimFrame); constRunning = false; }
+    buildConstellation();
+  }
+
+  function initConstellation() {
+    constCanvas = document.getElementById('constellation-canvas');
+    if (!constCanvas) return;
+    constCtx = constCanvas.getContext('2d');
+    // Set canvas pixel dimensions from its CSS layout size
+    constCanvas.width = constCanvas.offsetWidth || 760;
+    constCanvas.height = 500;
+    if (constAnimFrame) { cancelAnimationFrame(constAnimFrame); constRunning = false; }
+    constNodes = []; // reset so positions are regenerated
+    buildConstellation();
+  }
+
+  function buildConstellation() {
+    if (!constCanvas || !constCtx) return;
+    const W = constCanvas.width;
+    const H = constCanvas.height;
+    const pool = entries.filter(e => e.text && e.text.trim().length > 0);
+    if (pool.length === 0) {
+      constCtx.fillStyle = '#060612';
+      constCtx.fillRect(0, 0, W, H);
+      constCtx.fillStyle = 'rgba(100,140,220,0.5)';
+      constCtx.font = 'italic 14px IM Fell English, serif';
+      constCtx.textAlign = 'center';
+      constCtx.fillText('No entries yet. Begin listening.', W/2, H/2);
+      return;
+    }
+
+    // Build nodes — keep existing positions if already placed
+    const prevMap = {};
+    constNodes.forEach(n => { prevMap[n.date] = {x: n.x, y: n.y, vx: n.vx, vy: n.vy}; });
+
+    constNodes = pool.map((e) => {
+      const prev = prevMap[e.date];
+      return {
+        date: e.date,
+        text: e.text,
+        x: prev ? prev.x : 80 + Math.random() * (W - 160),
+        y: prev ? prev.y : 80 + Math.random() * (H - 160),
+        vx: prev ? prev.vx : (Math.random() - 0.5) * 0.2,
+        vy: prev ? prev.vy : (Math.random() - 0.5) * 0.2,
+        r: 5 + Math.min(10, e.text.length / 100),
+        hovered: false,
+        selected: constSelected === e.date
+      };
+    });
+
+    // Build edges
+    constEdges = [];
+    if (constMode === 'words') {
+      const nodeWords = constNodes.map(n => {
+        return new Set((n.text.toLowerCase().match(/[a-z']{4,}/g) || []).filter(w => !STOPWORDS.has(w)));
+      });
+      for (let i = 0; i < constNodes.length; i++) {
+        for (let j = i + 1; j < constNodes.length; j++) {
+          const shared = [...nodeWords[i]].filter(w => nodeWords[j].has(w));
+          if (shared.length > 0) {
+            constEdges.push({ a: i, b: j, weight: Math.min(shared.length / 4, 1), words: shared.slice(0,3) });
+          }
+        }
+      }
+    } else if (constMode === 'date') {
+      for (let i = 0; i < constNodes.length; i++) {
+        for (let j = i + 1; j < constNodes.length; j++) {
+          const da = new Date(constNodes[i].date), db = new Date(constNodes[j].date);
+          const diffDays = Math.abs((da - db) / 86400000);
+          if (diffDays <= 7) constEdges.push({ a: i, b: j, weight: 1 - diffDays/8, words: [] });
+        }
+      }
+    } else if (constMode === 'length') {
+      const lengths = constNodes.map(n => n.text.length);
+      const maxL = Math.max(...lengths, 1);
+      for (let i = 0; i < constNodes.length; i++) {
+        for (let j = i + 1; j < constNodes.length; j++) {
+          const sim = 1 - Math.abs(lengths[i] - lengths[j]) / maxL;
+          if (sim > 0.75) constEdges.push({ a: i, b: j, weight: (sim - 0.75) * 4, words: [] });
+        }
+      }
+    }
+
+    if (!constRunning) { constRunning = true; drawConstellation(); }
+  }
+
+  function drawConstellation() {
+    if (!constCtx || !constCanvas) { constRunning = false; return; }
+    const W = constCanvas.width, H = constCanvas.height;
+    constCtx.clearRect(0, 0, W, H);
+
+    // Background
+    constCtx.fillStyle = '#060612';
+    constCtx.fillRect(0, 0, W, H);
+
+    // Static background stars
+    constCtx.fillStyle = 'rgba(255,255,255,0.15)';
+    for (let i = 0; i < 90; i++) {
+      const sx = (i * 413 + 17) % W;
+      const sy = (i * 277 + 53) % H;
+      constCtx.beginPath();
+      constCtx.arc(sx, sy, 0.5, 0, Math.PI * 2);
+      constCtx.fill();
+    }
+
+    // Edges
+    constEdges.forEach(edge => {
+      const a = constNodes[edge.a], b = constNodes[edge.b];
+      if (!a || !b) return;
+      const highlighted = a.selected || b.selected || a.hovered || b.hovered;
+      constCtx.beginPath();
+      constCtx.moveTo(a.x, a.y);
+      constCtx.lineTo(b.x, b.y);
+      constCtx.strokeStyle = highlighted ? 'rgba(120,200,255,0.75)' : `rgba(60,100,200,${0.06 + edge.weight * 0.2})`;
+      constCtx.lineWidth = highlighted ? 1.2 : 0.5;
+      constCtx.stroke();
+      if (highlighted && edge.words.length > 0) {
+        const mx = (a.x + b.x)/2, my = (a.y + b.y)/2;
+        constCtx.font = '9px Share Tech Mono, monospace';
+        constCtx.fillStyle = 'rgba(160,210,255,0.85)';
+        constCtx.textAlign = 'center';
+        constCtx.fillText(edge.words[0], mx, my - 5);
+      }
+    });
+
+    // Nodes
+    constNodes.forEach(node => {
+      const active = node.selected || node.hovered;
+      if (active) {
+        const grd = constCtx.createRadialGradient(node.x, node.y, node.r, node.x, node.y, node.r * 4);
+        grd.addColorStop(0, 'rgba(100,180,255,0.3)');
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        constCtx.beginPath();
+        constCtx.arc(node.x, node.y, node.r * 4, 0, Math.PI * 2);
+        constCtx.fillStyle = grd;
+        constCtx.fill();
+      }
+      constCtx.beginPath();
+      constCtx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+      constCtx.fillStyle = node.selected ? '#64b4ff' : active ? '#a0d0ff' : '#1a2a5a';
+      constCtx.fill();
+      constCtx.strokeStyle = active ? '#64b4ff' : 'rgba(60,100,190,0.7)';
+      constCtx.lineWidth = 1;
+      constCtx.stroke();
+
+      // Date label
+      constCtx.font = active ? 'bold 10px Share Tech Mono,monospace' : '9px Share Tech Mono,monospace';
+      constCtx.fillStyle = active ? 'rgba(200,230,255,0.95)' : 'rgba(100,150,220,0.65)';
+      constCtx.textAlign = 'center';
+      constCtx.fillText(node.date ? node.date.slice(5) : '', node.x, node.y - node.r - 5);
+
+      // Snippet on hover
+      if (active && node.text) {
+        const snip = node.text.replace(/\n/g,' ').slice(0, 45) + (node.text.length > 45 ? '…' : '');
+        constCtx.font = 'italic 10px IM Fell English,serif';
+        constCtx.fillStyle = 'rgba(180,215,255,0.8)';
+        constCtx.fillText(snip, node.x, node.y + node.r + 14);
+      }
+    });
+
+    // Drift
+    constNodes.forEach(node => {
+      node.x += node.vx;
+      node.y += node.vy;
+      if (node.x < node.r + 10) { node.vx = Math.abs(node.vx); }
+      if (node.x > W - node.r - 10) { node.vx = -Math.abs(node.vx); }
+      if (node.y < node.r + 18) { node.vy = Math.abs(node.vy); }
+      if (node.y > H - node.r - 10) { node.vy = -Math.abs(node.vy); }
+    });
+
+    constAnimFrame = requestAnimationFrame(drawConstellation);
+  }
+
+  function onConstClick(e) {
+    const rect = constCanvas.getBoundingClientRect();
+    const scaleX = constCanvas.width / rect.width;
+    const scaleY = constCanvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+    let hit = null;
+    constNodes.forEach(node => {
+      const dx = node.x - mx, dy = node.y - my;
+      if (Math.sqrt(dx*dx + dy*dy) < node.r + 10) hit = node;
+    });
+    if (hit) {
+      constNodes.forEach(n => n.selected = false);
+      if (constSelected === hit.date) {
+        constSelected = null;
+        closeConstellationDetail();
+      } else {
+        constSelected = hit.date;
+        hit.selected = true;
+        showConstellationDetail(hit);
+      }
+    } else {
+      constSelected = null;
+      constNodes.forEach(n => n.selected = false);
+      closeConstellationDetail();
+    }
+  }
+
+  function onConstHover(e) {
+    if (!constCanvas) return;
+    const rect = constCanvas.getBoundingClientRect();
+    const scaleX = constCanvas.width / rect.width;
+    const scaleY = constCanvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+    let anyHover = false;
+    constNodes.forEach(node => {
+      const dx = node.x - mx, dy = node.y - my;
+      node.hovered = Math.sqrt(dx*dx + dy*dy) < node.r + 10;
+      if (node.hovered) anyHover = true;
+    });
+    constCanvas.style.cursor = anyHover ? 'pointer' : 'crosshair';
+  }
+
+  function showConstellationDetail(node) {
+    const panel = document.getElementById('const-detail');
+    document.getElementById('const-detail-date').textContent = '📅 ' + formatDate(node.date);
+    document.getElementById('const-detail-text').textContent = node.text;
+    panel.style.display = 'block';
+  }
+
+  function closeConstellationDetail() {
+    document.getElementById('const-detail').style.display = 'none';
+    constSelected = null;
+    constNodes.forEach(n => n.selected = false);
+  }
+
+  // Wire up canvas events once DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const cv = document.getElementById('constellation-canvas');
+    if (cv) {
+      cv.addEventListener('click', onConstClick);
+      cv.addEventListener('mousemove', onConstHover);
+    }
+  });
+  // ── END CONSTELLATION ─────────────────────────────────────────────────────
+
   function showStatus(el, msg, type) {
     el.textContent = msg;
     el.className = 'status-msg ' + type;
