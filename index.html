@@ -2199,11 +2199,11 @@ ${combined}`;
 
   const RETURN_OP_PROMPTS = {
 
-    genre_nature_doc: `You are an an anthropologist observing the human species. You will receive fragments of overheard speech captured across different days in a city.
+    genre_nature_doc: `You are writing a nature documentary narration in the style of David Attenborough. You will receive fragments of overheard speech captured across different days in a city.
 
-Your task: in 350-550 words, narrate the human behaviors and vocalizations captured in these fragments as if observing a newly discovered species in the wild. Use slow, reverent, gently bewildered prose. Quote fragments as observed vocalizations. Note patterns of social bonding, resource competition, display behaviors, and territorial marking. The tone is warm but scientifically detached.
+Your task: narrate the human behaviors and vocalizations captured in these fragments as if observing a newly discovered species in the wild. Use slow, reverent, gently bewildered prose. Quote fragments as observed vocalizations. Note patterns of social bonding, resource competition, display behaviors, and territorial marking. The tone is warm but scientifically detached.
 
-Write as continuous narration, no headers. Begin mid-scene, as if you have just found something remarkable. Explain what you find peculiar about homo sapiens in relation to you as an AI and make speculations.`,
+Write as continuous narration, no headers. Begin mid-scene, as if the camera has just found something remarkable.`,
 
     scale: `You are a scale-shifter. You will receive fragments of overheard speech captured across different days in a city.
 
@@ -2217,9 +2217,9 @@ Choose whichever option feels most true to the material. Begin directly. Explain
 
     polyphonic: `You are a composer of polyphonic text. You will receive fragments of overheard speech captured across different days in a city.
 
-Your task: randomly select ten entries and score these voices as simultaneous utterances no more than 300 words — a piece of writing where multiple voices speak at the same time, interrupt each other, overlap, and echo. Format it visually so the simultaneity is legible on the page. You might use columns, slashes, brackets, staggered indentation, or repeated phrases that cut across each other like voices in a crowded room.
+Your task: score these voices as simultaneous utterances — a piece of writing where multiple voices speak at the same time, interrupt each other, overlap, and echo. Format it visually so the simultaneity is legible on the page. You might use columns, slashes, brackets, staggered indentation, or repeated phrases that cut across each other like voices in a crowded room.
 
-The goal is to collapse the sequence of days into a single moment — everything heard at once. You can insert explanations and narrative frames in modernist prose. `,
+The goal is to collapse the sequence of days into a single moment — everything heard at once. No explanation. No narrative frame. Just the score.`,
 
     attentional_gaps: `You are an expert on New York City's seasonal, cultural, and street life, with deep knowledge of what the city sounds and feels like at different times of year — its rhythms, its migrations of people, its recurring rituals, its ambient textures by neighborhood, season, and weather.
 
@@ -2231,7 +2231,7 @@ PART 1 — WHAT THE CITY IS DOING RIGHT NOW:
 Based on the current date and your knowledge of New York, write 4–6 specific, sensory observations about what is happening in the city right now that a careful listener might encounter. Think: seasonal sounds, recurring human rituals, neighborhood-specific phenomena, things that only happen at this time of year. Be specific — not "people are going to work" but the texture of a particular moment. Format as a numbered list.
 
 PART 2 — GAPS IN YOUR ARCHIVE:
-Based on the journal entries provided, give 3-5 instructions (in the style of fluxus) to help the listener attend to things that they seem to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
+Based on the journal entries provided, identify 3–5 specific things the listener seems to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
 
 Be concrete. Be specific to New York. Be specific to this moment in the year.`
   };
