@@ -1319,54 +1319,6 @@
           <div class="inset-label">Estranging Operation</div>
           <div style="display:flex; flex-direction:column; gap:8px;">
 
-            <label class="return-op-label" onclick="selectReturnOp('genre_wildlife', this)">
-              <input type="radio" name="return-op" value="genre_wildlife" checked style="display:none;" />
-              <div class="return-op-card active" id="op-genre_wildlife">
-                <div class="return-op-title">🦎 Wildlife Field Report</div>
-                <div class="return-op-desc">A biologist observing an unfamiliar urban species. Clinical detachment applied to intimate human speech.</div>
-              </div>
-            </label>
-
-            <label class="return-op-label" onclick="selectReturnOp('genre_legal', this)">
-              <input type="radio" name="return-op" value="genre_legal" style="display:none;" />
-              <div class="return-op-card" id="op-genre_legal">
-                <div class="return-op-title">⚖ Legal Deposition</div>
-                <div class="return-op-desc">Every fragment entered into the record as sworn testimony. The weight of law applied to overheard breath.</div>
-              </div>
-            </label>
-
-            <label class="return-op-label" onclick="selectReturnOp('genre_liturgy', this)">
-              <input type="radio" name="return-op" value="genre_liturgy" style="display:none;" />
-              <div class="return-op-card" id="op-genre_liturgy">
-                <div class="return-op-title">🕯 Liturgy</div>
-                <div class="return-op-desc">Call and response. Fragments as sacred text, congregation and cantor. The street as cathedral.</div>
-              </div>
-            </label>
-
-            <label class="return-op-label" onclick="selectReturnOp('genre_manual', this)">
-              <input type="radio" name="return-op" value="genre_manual" style="display:none;" />
-              <div class="return-op-card" id="op-genre_manual">
-                <div class="return-op-title">🔧 Instruction Manual</div>
-                <div class="return-op-desc">How to assemble a human interaction, step by step. Safety warnings included. Warranty void if feelings involved.</div>
-              </div>
-            </label>
-
-            <label class="return-op-label" onclick="selectReturnOp('genre_weather', this)">
-              <input type="radio" name="return-op" value="genre_weather" style="display:none;" />
-              <div class="return-op-card" id="op-genre_weather">
-                <div class="return-op-title">🌦 Weather Service Bulletin</div>
-                <div class="return-op-desc">An official forecast of the city's emotional atmosphere. Fronts, pressure systems, advisories for the week ahead.</div>
-              </div>
-            </label>
-
-            <label class="return-op-label" onclick="selectReturnOp('genre_manifest', this)">
-              <input type="radio" name="return-op" value="genre_manifest" style="display:none;" />
-              <div class="return-op-card" id="op-genre_manifest">
-                <div class="return-op-title">📦 Shipping Manifest</div>
-                <div class="return-op-desc">Every overheard phrase logged as cargo. Origin, destination, condition, declared value. Language as goods in transit.</div>
-              </div>
-            </label>
-
             <label class="return-op-label" onclick="selectReturnOp('genre_nature_doc', this)">
               <input type="radio" name="return-op" value="genre_nature_doc" style="display:none;" />
               <div class="return-op-card" id="op-genre_nature_doc">
@@ -2239,12 +2191,6 @@ ${combined}`;
   let returnOp = 'genre_wildlife';
 
   const RETURN_OP_LABELS = {
-    genre_wildlife:  '🦎 Wildlife Field Report',
-    genre_legal:     '⚖ Legal Deposition',
-    genre_liturgy:   '🕯 Liturgy',
-    genre_manual:    '🔧 Instruction Manual',
-    genre_weather:   '🌦 Weather Service Bulletin',
-    genre_manifest:  '📦 Shipping Manifest',
     genre_nature_doc:'🎙 Nature Documentary',
     scale:           '🔬 Scale Shift',
     polyphonic:      '🎼 Polyphonic Collapse',
@@ -2252,47 +2198,12 @@ ${combined}`;
   };
 
   const RETURN_OP_PROMPTS = {
-    genre_wildlife: `You are writing a wildlife field report. You will receive fragments of overheard human speech captured across different days in a city.
 
-Your task: write a formal field report from a biologist who has been observing an unfamiliar urban species — Homo sapiens sapiens — in its natural habitat. Use precise, clinical scientific register. Describe behaviors, vocalizations, social dynamics, and territorial markers as if encountering them for the first time. Quote fragments verbatim as "recorded vocalizations." Include sections: Observation Conditions, Behavioral Notes, Recorded Vocalizations, Preliminary Hypotheses.
-
-Do not break the frame. Begin directly with the report header.`,
-
-    genre_legal: `You are a court reporter. You will receive fragments of overheard speech captured across different days in a city.
-
-Your task: render ALL of these fragments as a legal deposition transcript. Each fragment becomes sworn testimony entered into the record. Include: case number, date, witness designation (Witness A, Witness B, etc.), examination by counsel, objections, and judge's rulings where appropriate. The content should remain unchanged — only the frame shifts. The mundane becomes evidence.
-
-Stay fully inside the legal transcript form. Begin directly with the case header.`,
-
-    genre_liturgy: `You are a liturgical composer. You will receive fragments of overheard speech captured across different days in a city.
-
-Your task: recast these fragments as a call-and-response liturgy — a sacred text for an unnamed congregation. Assign some fragments to a cantor or priest voice, others to the congregation's response. Add refrains, doxologies, moments of silence marked as [silence]. The street becomes a cathedral. The overheard becomes scripture.
-
-Stay fully inside the liturgical form. No explanation. Begin directly.`,
-
-    genre_manual: `You are a technical writer. You will receive fragments of overheard speech captured across different days in a city.
-
-Your task: write a complete instruction manual for assembling or operating "a human interaction" — using these fragments as source material. Include: safety warnings, a parts list, numbered assembly steps, a troubleshooting guide, and warranty information. Each overheard phrase should appear somewhere in the manual as either instruction, warning, or example output.
-
-Use dry, precise technical writing register throughout. Begin directly with the manual cover page.`,
-
-    genre_weather: `You are a meteorologist of human emotion. You will receive fragments of overheard speech captured across different days in a city.
-
-Your task: write an official weather service bulletin for the city's emotional atmosphere during this period. Include: a forecast summary, pressure systems (high anxiety, low affect, etc.), fronts moving through, visibility conditions, advisories and warnings for vulnerable populations, and a 7-day outlook. Ground all observations in specific fragments from the entries.
-
-Use official weather bulletin format and register. Begin directly.`,
-
-    genre_manifest: `You are a logistics officer. You will receive fragments of overheard speech captured across different days in a city.
-
-Your task: produce a shipping manifest in which every overheard phrase is logged as cargo. For each item include: item number, description of goods, origin location, destination, condition on receipt, declared value, handling instructions, and any damage notes. Language is goods in transit. Meaning is declared, not assumed.
-
-Use formal logistics/customs document format throughout. Begin directly with the manifest header.`,
-
-    genre_nature_doc: `You are writing a nature documentary narration in the style of David Attenborough. You will receive fragments of overheard speech captured across different days in a city.
+    genre_nature_doc: `You are writing a nature documentary narration. You will receive fragments of overheard speech captured across different days in a city.
 
 Your task: narrate the human behaviors and vocalizations captured in these fragments as if observing a newly discovered species in the wild. Use slow, reverent, gently bewildered prose. Quote fragments as observed vocalizations. Note patterns of social bonding, resource competition, display behaviors, and territorial marking. The tone is warm but scientifically detached.
 
-Write as continuous narration, no headers. Begin mid-scene, as if the camera has just found something remarkable.`,
+Write as continuous narration, no headers. Begin mid-scene, as if the camera has just found something remarkable. Do explain what you find peculiar about homo sapiens and make speculations.`,
 
     scale: `You are a scale-shifter. You will receive fragments of overheard speech captured across different days in a city.
 
@@ -2320,7 +2231,7 @@ PART 1 — WHAT THE CITY IS DOING RIGHT NOW:
 Based on the current date and your knowledge of New York, write 4–6 specific, sensory observations about what is happening in the city right now that a careful listener might encounter. Think: seasonal sounds, recurring human rituals, neighborhood-specific phenomena, things that only happen at this time of year. Be specific — not "people are going to work" but the texture of a particular moment. Format as a numbered list.
 
 PART 2 — GAPS IN YOUR ARCHIVE:
-Based on the journal entries provided, identify 3–5 specific things the listener seems to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
+Based on the journal entries provided, give prompts (in the style of fluxus instruction art) to facilate attending to 3–5 specific things the listener seems to be missing, avoiding, or not yet tuned to. Look for: voices that don't appear (certain ages, languages, registers), locations that are absent, times of day unrepresented, types of social interaction never captured, emotional registers that don't show up. Frame these as gentle invitations, not criticism — "you haven't yet heard..." or "missing from your archive is the sound of..."
 
 Be concrete. Be specific to New York. Be specific to this moment in the year.`
   };
